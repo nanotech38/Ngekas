@@ -1,0 +1,2 @@
+# Ngekas
+aplikasi catatan penjualan
