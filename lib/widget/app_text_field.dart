@@ -14,6 +14,7 @@ class AppTextField extends StatefulWidget {
   final ValueChanged<String>? onChanged;
   final FormFieldValidator<String>? validator;
   final bool isRequired;
+  final bool showRequiredMark;
   final bool enabled;
   final int? maxLines;
   final FocusNode? focusNode;
@@ -31,6 +32,7 @@ class AppTextField extends StatefulWidget {
     this.onChanged,
     this.validator,
     this.isRequired = false,
+    this.showRequiredMark = true,
     this.enabled = true,
     this.maxLines,
     this.focusNode,
@@ -105,7 +107,7 @@ class _AppTextFieldState extends State<AppTextField> {
                 color: _isFocused ? AppColors.primary : AppColors.textMuted,
               ),
             ),
-            if (widget.isRequired)
+            if (widget.isRequired && widget.showRequiredMark)
               Text(
                 ' *',
                 style: TextStyle(

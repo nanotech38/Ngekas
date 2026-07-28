@@ -12,3 +12,6 @@ GeneratedPluginRegistrant.java
 key.properties
 **/*.keystore
 **/*.jks
+
+# Config Firebase — jangan di-commit, unduh ulang dari Firebase console kalau perlu di mesin lain.
+app/google-services.json

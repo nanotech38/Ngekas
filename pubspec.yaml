@@ -34,11 +34,35 @@ dependencies:
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
+
+  # Animasi transisi antar halaman (fade, slide, dll) untuk NavigationService.
   page_transition: ^2.2.2
+
+  # State Management
   flutter_bloc: ^9.1.1
-  equatable: ^2.0.7
-  sqflite: ^2.3.3+1
+  # Mempermudah perbandingan objek state (value equality) tanpa override manual.
+  equatable: ^2.0.8
+
+  # Database Local — penyimpanan data transaksi/penjualan di perangkat (SQLite).
+  sqflite: ^2.4.2+1
+  
+  # Utility untuk menyusun path file database secara cross-platform.
   path: ^1.9.0
+
+  # Logging terstruktur untuk debugging (menggantikan print/debugPrint biasa).
+  logger: ^2.7.0
+
+  # Font Montserrat untuk seluruh aplikasi, diambil dari Google Fonts.
+  google_fonts: ^8.2.0
+
+  # Firebase — inisialisasi koneksi ke project Firebase (wajib sebelum pakai produk Firebase apa pun).
+  firebase_core: ^4.12.1
+
+  # Firebase Authentication — login, daftar akun, dan sesi login (stay logged in).
+  firebase_auth: ^6.5.6
+
+  # Cloud Firestore — database bersama (owner & staff beda device) untuk data bisnis.
+  cloud_firestore: ^6.7.1
 
 dev_dependencies:
   flutter_test:

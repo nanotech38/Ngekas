@@ -3,6 +3,8 @@ plugins {
     id("kotlin-android")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
+    // Google services Gradle plugin, dibutuhkan supaya google-services.json terbaca oleh Firebase SDK.
+    id("com.google.gms.google-services")
 }
 
 android {
@@ -41,4 +43,12 @@ android {
 
 flutter {
     source = "../.."
+}
+
+dependencies {
+    // Import the Firebase BoM supaya semua library Firebase pakai versi yang kompatibel.
+    implementation(platform("com.google.firebase:firebase-bom:34.16.0"))
+
+    // Firebase Analytics — default product yang disarankan Firebase console.
+    implementation("com.google.firebase:firebase-analytics")
 }

@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:ngekas/bloc/auth/auth_cubit.dart';
 import 'package:ngekas/bloc/splash/splash_cubit.dart';
 import 'package:ngekas/const/app_rc_const.dart';
 import 'package:ngekas/const/app_theme_const.dart';
+import 'package:ngekas/screen/home_screen.dart';
+import 'package:ngekas/screen/login_screen.dart';
+import 'package:ngekas/services/navigation_services.dart';
+import 'package:ngekas/template/base_template.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -78,37 +83,26 @@ class _SplashScreenState extends State<SplashScreen>
         }
         if (state.rc == rcSuccess) {
           _animateProgress(1.0);
+          final authCubit = context.read<AuthCubit>();
           Future.delayed(const Duration(milliseconds: 600), () {
-            // TODO: ganti dengan halaman utama setelah dibuat
-            // NavigationService.get().pushAndRemoveAll(const HomeScreen());
+            if (state.isLoggedIn) {
+              authCubit.loadCurrentProfile();
+              NavigationService.get().pushAndRemoveAll(const HomeScreen());
+            } else {
+              NavigationService.get().pushAndRemoveAll(const LoginScreen());
+            }
           });
         }
       },
-      child: Scaffold(
-        body: Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                Color(0xFF134E4A),
-                Color(0xFF0F766E),
-                Color(0xFF0D9488),
-              ],
-              stops: [0.0, 0.5, 1.0],
-            ),
-          ),
-          child: SafeArea(
-            child: Column(
-              children: [
-                const Spacer(flex: 2),
-                _buildLogo(),
-                const Spacer(flex: 3),
-                _buildProgressSection(),
-                const SizedBox(height: 48),
-              ],
-            ),
-          ),
+      child: BaseTemplate(
+        child: Column(
+          children: [
+            const Spacer(flex: 2),
+            _buildLogo(),
+            const Spacer(flex: 3),
+            _buildProgressSection(),
+            const SizedBox(height: 48),
+          ],
         ),
       ),
     );

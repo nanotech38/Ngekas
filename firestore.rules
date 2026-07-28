@@ -1,0 +1,48 @@
+rules_version = '2';
+
+// Fondasi rules untuk model owner & staff:
+// - /users/{uid}      -> profil workspace tiap akun (role, ownerId).
+// - /workspaces/{ownerId}/... -> data bisnis milik 1 owner, dibaca/ditulis
+//   oleh owner itu sendiri ATAU staff yang ownerId-nya cocok.
+//
+// Baseline permission: staff boleh create+read transaksi/kategori, tapi
+// cuma owner yang boleh update/delete. Perhalus lagi begitu fitur
+// undang-staff & UI pembatasannya sudah dibangun.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function myProfile() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function isMemberOfWorkspace(ownerId) {
+      return isSignedIn() && myProfile().ownerId == ownerId;
+    }
+
+    function isOwnerRole() {
+      return myProfile().role == 'owner';
+    }
+
+    // Profil user sendiri: hanya boleh dibaca/ditulis oleh uid yang sama.
+    match /users/{uid} {
+      allow read, write: if isSignedIn() && request.auth.uid == uid;
+    }
+
+    match /workspaces/{ownerId} {
+      match /categories/{categoryId} {
+        allow read, create: if isMemberOfWorkspace(ownerId);
+        allow update, delete: if isMemberOfWorkspace(ownerId) && isOwnerRole();
+      }
+
+      match /transactions/{transactionId} {
+        allow read, create: if isMemberOfWorkspace(ownerId);
+        allow update, delete: if isMemberOfWorkspace(ownerId) && isOwnerRole();
+      }
+    }
+  }
+}
