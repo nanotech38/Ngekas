@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<title>FSD — Ngekas</title>
+<style>
+  @page { size: A4; margin: 20mm 16mm 18mm 16mm; }
+  * { box-sizing: border-box; }
+  body {
+    font-family: 'Segoe UI', Calibri, Arial, sans-serif;
+    color: #1c2430;
+    font-size: 10.6pt;
+    line-height: 1.55;
+    margin: 0;
+  }
+  h1, h2, h3 { color: #0f3d3e; font-weight: 700; }
+  h1 { font-size: 20pt; margin: 0 0 4pt 0; }
+  h2 {
+    font-size: 14pt;
+    margin: 0 0 10pt 0;
+    padding-bottom: 6pt;
+    border-bottom: 2px solid #12736f;
+  }
+  h3 { font-size: 11.5pt; margin: 16pt 0 6pt 0; color: #12736f; }
+  p { margin: 0 0 8pt 0; }
+  .section { page-break-before: always; padding-top: 4pt; }
+  .section:first-of-type { page-break-before: avoid; }
+  .muted { color: #5a6472; }
+  .small { font-size: 9pt; }
+
+  /* ---- Cover ---- */
+  .cover {
+    height: 257mm;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+    background: linear-gradient(160deg, #0f3d3e 0%, #12736f 55%, #1a9e8f 100%);
+    color: #fff;
+    padding: 40mm 18mm;
+    margin: -20mm -16mm 0 -16mm;
+  }
+  .cover .tag {
+    display: inline-block;
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.4);
+    border-radius: 20px;
+    padding: 4pt 14pt;
+    font-size: 9pt;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 18pt;
+  }
+  .cover h1 { color: #fff; font-size: 34pt; margin-bottom: 6pt; }
+  .cover .subtitle { font-size: 13pt; opacity: 0.92; max-width: 380pt; margin-bottom: 30pt; }
+  .cover .quote {
+    font-style: italic;
+    font-size: 14pt;
+    border-left: 3px solid #fff;
+    padding-left: 14pt;
+    max-width: 360pt;
+    opacity: 0.95;
+  }
+  .cover .meta {
+    position: absolute;
+    bottom: 22mm;
+    font-size: 9.5pt;
+    opacity: 0.85;
+  }
+  .cover-wrap { position: relative; }
+
+  /* ---- TOC ---- */
+  .toc-list { list-style: none; padding: 0; margin: 0; }
+  .toc-list li {
+    display: flex;
+    justify-content: space-between;
+    padding: 7pt 0;
+    border-bottom: 1px dotted #c7cdd3;
+    font-size: 10.5pt;
+  }
+  .toc-list .num { color: #12736f; font-weight: 700; width: 24pt; display: inline-block; }
+
+  /* ---- Tables ---- */
+  table { width: 100%; border-collapse: collapse; margin: 8pt 0 14pt 0; font-size: 9.6pt; }
+  th {
+    background: #0f3d3e; color: #fff; text-align: left;
+    padding: 6pt 8pt; font-size: 9.3pt;
+  }
+  td { padding: 6pt 8pt; border-bottom: 1px solid #e2e6ea; vertical-align: top; }
+  tr:nth-child(even) td { background: #f4f7f7; }
+
+  /* ---- Badges ---- */
+  .badge {
+    display: inline-block;
+    padding: 2pt 8pt;
+    border-radius: 10px;
+    font-size: 8.3pt;
+    font-weight: 700;
+    color: #fff;
+    white-space: nowrap;
+  }
+  .b-must { background: #c0392b; }
+  .b-should { background: #d68910; }
+  .b-could { background: #2471a3; }
+  .b-later { background: #7f8c8d; }
+  .b-done { background: #1e8449; }
+
+  /* ---- Phase cards ---- */
+  .phase {
+    border: 1px solid #d7dce0;
+    border-radius: 8px;
+    margin-bottom: 12pt;
+    overflow: hidden;
+  }
+  .phase-head {
+    background: #eef5f4;
+    padding: 8pt 12pt;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #d7dce0;
+  }
+  .phase-head .title { font-weight: 700; color: #0f3d3e; font-size: 11pt; }
+  .phase-body { padding: 10pt 14pt; }
+  .phase-body ul { margin: 0; padding-left: 16pt; }
+  .phase-body li { margin-bottom: 4pt; }
+
+  /* ---- Flow diagram (pure CSS boxes) ---- */
+  .flow { display: flex; align-items: stretch; flex-wrap: wrap; gap: 0; margin: 10pt 0 16pt 0; }
+  .flow-box {
+    background: #fff;
+    border: 1.5px solid #12736f;
+    border-radius: 8px;
+    padding: 8pt 10pt;
+    font-size: 9pt;
+    min-width: 90pt;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  .flow-box strong { display: block; color: #0f3d3e; font-size: 9.3pt; margin-bottom: 2pt; }
+  .flow-box.alt { background: #fdf3e3; border-color: #d68910; }
+  .flow-arrow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 6pt;
+    font-size: 13pt;
+    color: #12736f;
+    font-weight: 700;
+  }
+  .flow-col { display: flex; flex-direction: column; gap: 8pt; }
+  .flow-branch { display: flex; flex-direction: column; gap: 6pt; }
+
+  .note-box {
+    background: #fdf3e3;
+    border-left: 4px solid #d68910;
+    padding: 8pt 12pt;
+    border-radius: 4px;
+    margin: 10pt 0;
+    font-size: 9.6pt;
+  }
+  .note-box strong { color: #a35b00; }
+
+  .done-box {
+    background: #eafaf1;
+    border-left: 4px solid #1e8449;
+    padding: 8pt 12pt;
+    border-radius: 4px;
+    margin: 10pt 0;
+    font-size: 9.6pt;
+  }
+
+  code {
+    background: #eef1f3;
+    padding: 1pt 5pt;
+    border-radius: 4px;
+    font-size: 9pt;
+    color: #a3251a;
+  }
+
+  .footer-tag {
+    position: fixed;
+    bottom: 8mm;
+    font-size: 8pt;
+    color: #9aa4ac;
+  }
+
+  .two-col { display: flex; gap: 16pt; }
+  .two-col > div { flex: 1; }
+</style>
+</head>
+<body>
+
+<!-- ============ COVER ============ -->
+<div class="cover">
+  <div class="tag">Functional Specification Document</div>
+  <h1>Ngekas</h1>
+  <div class="subtitle">Catat pemasukan dan pengeluaran usahamu dengan mudah.</div>
+  <div class="quote">Dari catatan warung di buku tulis, jadi satu aplikasi yang bisa dibuka pemilik &amp; staff dari HP masing-masing.</div>
+  <div class="meta">Versi Dokumen 1.1 &nbsp;•&nbsp; 30 Juli 2026 &nbsp;•&nbsp; Disusun untuk perencanaan pengembangan bertahap</div>
+</div>
+
+<!-- ============ TOC ============ -->
+<div class="section">
+<h2>Daftar Isi</h2>
+<ul class="toc-list">
+  <li><span><span class="num">1.</span> Ringkasan Produk</span></li>
+  <li><span><span class="num">2.</span> Status Saat Ini — Apa yang Sudah Dibangun</span></li>
+  <li><span><span class="num">3.</span> Prioritas Pengembangan (Roadmap Bertahap)</span></li>
+  <li><span><span class="num">4.</span> Rincian Fitur per Modul</span></li>
+  <li><span><span class="num">5.</span> Alur Aplikasi (User Flow)</span></li>
+  <li><span><span class="num">6.</span> Model Data (Firestore)</span></li>
+  <li><span><span class="num">7.</span> Kebutuhan Non-Fungsional</span></li>
+  <li><span><span class="num">8.</span> Keputusan Terbuka &amp; Risiko</span></li>
+</ul>
+
+<h3>Cara Membaca Prioritas</h3>
+<p>
+  <span class="badge b-done">SELESAI</span>
+  <span class="badge b-must">MUST</span>
+  <span class="badge b-should">SHOULD</span>
+  <span class="badge b-could">COULD</span>
+  <span class="badge b-later">NANTI</span>
+</p>
+<p class="small muted">MUST = wajib ada supaya aplikasi bisa dipakai (MVP). SHOULD = penting tapi bisa menyusul. COULD = nilai tambah kalau ada waktu. NANTI = sengaja ditunda, butuh keputusan/infrastruktur tambahan.</p>
+</div>
+
+<!-- ============ 1. RINGKASAN PRODUK ============ -->
+<div class="section">
+<h2>1. Ringkasan Produk</h2>
+
+<h3>1.1 Visi</h3>
+<p>
+  Ngekas adalah aplikasi pencatatan keuangan usaha kecil (warung, toko, jasa) yang menggantikan buku catatan manual.
+  Fokus utamanya: <strong>mencatat pemasukan &amp; pengeluaran secepat dan sesimpel mungkin</strong>, lalu menyajikannya
+  kembali sebagai laporan yang mudah dibaca oleh pemilik usaha — termasuk saat pemilik punya staff yang ikut mencatat
+  transaksi dari HP masing-masing.
+</p>
+
+<h3>1.2 Masalah yang Diselesaikan</h3>
+<table>
+  <tr><th style="width:35%">Masalah</th><th>Solusi Ngekas</th></tr>
+  <tr><td>Catatan di buku tulis mudah hilang/rusak, tidak ada rekap otomatis</td><td>Catatan tersimpan digital, bisa direkap kapan saja</td></tr>
+  <tr><td>Pemilik tidak tahu untung/rugi tanpa menjumlah manual</td><td>Ringkasan &amp; laporan otomatis (harian/bulanan)</td></tr>
+  <tr><td>Staff mencatat transaksi tapi datanya terpisah dari milik pemilik</td><td>Satu workspace bersama — owner &amp; staff mencatat ke data yang sama, dari device berbeda</td></tr>
+  <tr><td>Staff bisa saja mengubah/menghapus catatan lama secara tidak sengaja</td><td>Staff hanya boleh tambah &amp; lihat; ubah/hapus dibatasi untuk owner</td></tr>
+</table>
+
+<h3>1.3 Target Pengguna</h3>
+<div class="two-col">
+  <div>
+    <p><strong>Owner (Pemilik Usaha)</strong></p>
+    <p class="small">Pemilik warung/toko/usaha jasa skala kecil-menengah. Mendaftar sendiri, otomatis menjadi pemilik workspace-nya sendiri. Butuh gambaran cepat kondisi keuangan usaha dan kendali penuh atas data.</p>
+  </div>
+  <div>
+    <p><strong>Staff (Karyawan/Kasir)</strong></p>
+    <p class="small">Diundang oleh owner untuk membantu mencatat transaksi harian dari perangkatnya sendiri. Akses dibatasi — bisa mencatat &amp; melihat, tidak bisa mengubah/menghapus data lama atau mengubah pengaturan usaha.</p>
+  </div>
+</div>
+
+<h3>1.4 Platform &amp; Arsitektur Singkat</h3>
+<p>Aplikasi mobile Flutter (Android prioritas), autentikasi &amp; data bisnis di Firebase (Firebase Auth + Cloud Firestore) supaya data owner dan staff bisa sinkron real-time lintas perangkat.</p>
+</div>
+
+<!-- ============ 2. STATUS SAAT INI ============ -->
+<div class="section">
+<h2>2. Status Saat Ini — Apa yang Sudah Dibangun</h2>
+
+<div class="done-box">
+  Bagian pondasi (autentikasi &amp; struktur multi-tenant) <strong>sudah berjalan</strong>, dan modul
+  <strong>Kelola Kategori sudah selesai dibangun</strong> (CRUD penuh, real-time via Firestore, dibatasi peran owner/staff).
+  Modul lain (Laporan, Staff, Pengaturan) <strong>belum dibangun</strong> — baru berupa menu placeholder di Home.
+</div>
+
+<table>
+<tr><th style="width:26%">Area</th><th>Status</th><th>Keterangan</th></tr>
+<tr><td>Splash &amp; Auto-login</td><td><span class="badge b-done">SELESAI</span></td><td>Cek sesi Firebase Auth aktif → langsung ke Home tanpa login ulang</td></tr>
+<tr><td>Register</td><td><span class="badge b-done">SELESAI</span></td><td>Akun baru otomatis jadi <em>owner</em> dari workspace-nya sendiri (<code>ownerId == uid</code>)</td></tr>
+<tr><td>Login / Logout</td><td><span class="badge b-done">SELESAI</span></td><td>Termasuk penanganan error via dialog (bukan snackbar)</td></tr>
+<tr><td>Profil User (role &amp; ownerId)</td><td><span class="badge b-done">SELESAI</span></td><td>Model <code>AppUser</code>, disimpan di Firestore <code>/users/{uid}</code>, dengan cache lokal</td></tr>
+<tr><td>Aturan akses data (Firestore Rules)</td><td><span class="badge b-done">SELESAI</span></td><td>Baseline: staff boleh create+read, hanya owner boleh update+delete</td></tr>
+<tr><td>Home Screen</td><td><span class="badge b-should">SEBAGIAN</span></td><td>Kartu profil + grid 4 menu (Laporan, Kelola Kategori, Staff, Pengaturan), routing per-menu lewat <code>MenuItem.id</code> di <code>HomeLogic</code></td></tr>
+<tr><td>Kelola Kategori</td><td><span class="badge b-done">SELESAI</span></td><td>Tab Pemasukan/Pengeluaran, tambah/ubah/hapus kategori (ubah &amp; hapus dibatasi owner), list real-time via Firestore stream</td></tr>
+<tr><td>Laporan (catat + lihat pemasukan/pengeluaran)</td><td><span class="badge b-later">BELUM</span></td><td>Menu ada di Home, halaman &amp; logic belum dibuat</td></tr>
+<tr><td>Staff (undang &amp; kelola)</td><td><span class="badge b-later">BELUM</span></td><td>Butuh Cloud Function terpisah (client SDK tidak bisa buat akun lain tanpa membajak sesi aktif)</td></tr>
+<tr><td>Pengaturan</td><td><span class="badge b-later">BELUM</span></td><td>Menu ada di Home, halaman &amp; logic belum dibuat</td></tr>
+</table>
+</div>
+
+<!-- ============ 3. PRIORITAS PENGEMBANGAN ============ -->
+<div class="section">
+<h2>3. Prioritas Pengembangan (Roadmap Bertahap)</h2>
+<p>Urutan fase berikut disusun berdasarkan <strong>value ke pengguna paling cepat</strong>: pemilik usaha harus bisa
+mencatat &amp; melihat hasil catatannya (Fase 1) sebelum fitur kolaborasi tim (Fase 3) jadi relevan. Tidak ada menu
+"Transaksi" terpisah — mencatat pemasukan/pengeluaran adalah bagian dari menu <strong>Laporan</strong> itu sendiri
+(satu layar: daftar catatan + tombol tambah), sesuai keputusan produk terbaru.</p>
+
+<div class="phase">
+  <div class="phase-head"><span class="title">Fase 1 — MVP: Bisa Catat &amp; Lihat Saldo</span><span class="badge b-must">MUST</span></div>
+  <div class="phase-body">
+    <ul>
+      <li><span class="badge b-done">SELESAI</span> <strong>Kelola Kategori</strong>: buat/lihat/ubah/hapus kategori pemasukan &amp; pengeluaran — dibangun lebih dulu karena Laporan mereferensikan kategori saat mengisi field "tipe"</li>
+      <li><strong>Laporan</strong>: layar utama pencatatan — daftar riwayat pemasukan/pengeluaran + tombol tambah. Mengisi entri = pilih Pemasukan/Pengeluaran → pilih kategori (dari Kelola Kategori, dua langkah) → nominal, tanggal, catatan</li>
+      <li><strong>Ringkasan di Home</strong>: total pemasukan, pengeluaran, dan saldo (hari ini / bulan berjalan)</li>
+    </ul>
+  </div>
+</div>
+
+<div class="phase">
+  <div class="phase-head"><span class="title">Fase 2 — Analitik &amp; Kontrol Data</span><span class="badge b-should">SHOULD</span></div>
+  <div class="phase-body">
+    <ul>
+      <li><strong>Ringkasan periode di Laporan</strong>: filter rentang tanggal, rekap per kategori, grafik pemasukan vs pengeluaran (bagian dari layar Laporan, bukan menu terpisah)</li>
+      <li><strong>Edit/Hapus entri &amp; kategori</strong> (mengacu ke aturan akses yang sudah ada — hanya owner)</li>
+      <li><strong>Pengaturan dasar</strong>: nama usaha, mata uang/format angka, ganti password, logout (sudah ada)</li>
+    </ul>
+  </div>
+</div>
+
+<div class="phase">
+  <div class="phase-head"><span class="title">Fase 3 — Kolaborasi Tim (Staff)</span><span class="badge b-could">COULD</span></div>
+  <div class="phase-body">
+    <ul>
+      <li><strong>Undang Staff</strong>: owner mengundang staff via email (memerlukan Cloud Function)</li>
+      <li><strong>Kelola Staff</strong>: lihat daftar staff, nonaktifkan akses staff</li>
+      <li><strong>UI dibatasi peran</strong>: staff tidak melihat tombol edit/hapus atau menu Pengaturan sensitif</li>
+    </ul>
+  </div>
+</div>
+
+<div class="phase">
+  <div class="phase-head"><span class="title">Fase 4 — Penyempurnaan</span><span class="badge b-later">NANTI</span></div>
+  <div class="phase-body">
+    <ul>
+      <li>Export laporan (PDF/Excel), backup/berbagi laporan ke pihak lain (mis. akuntan)</li>
+      <li>Target/anggaran bulanan &amp; notifikasi pengingat catat harian</li>
+      <li>Keputusan akhir soal <code>DatabaseService</code>/sqflite: dijadikan cache offline atau dihapus total</li>
+      <li>Mode offline penuh dengan sinkronisasi otomatis saat online kembali</li>
+    </ul>
+  </div>
+</div>
+</div>
+
+<!-- ============ 4. RINCIAN FITUR PER MODUL ============ -->
+<div class="section">
+<h2>4. Rincian Fitur per Modul</h2>
+
+<h3>4.1 Autentikasi <span class="badge b-done">SELESAI</span></h3>
+<table>
+<tr><th style="width:30%">Fitur</th><th>Deskripsi</th></tr>
+<tr><td>Daftar Akun</td><td>Email + password → otomatis jadi owner workspace sendiri</td></tr>
+<tr><td>Masuk</td><td>Email + password, error ditampilkan lewat dialog</td></tr>
+<tr><td>Sesi Otomatis</td><td>Splash screen mengecek sesi aktif, langsung ke Home bila valid</td></tr>
+<tr><td>Keluar</td><td>Logout dari menu Home, kembali ke Login</td></tr>
+</table>
+
+<h3>4.2 Kelola Kategori <span class="badge b-done">SELESAI</span></h3>
+<p class="small muted">Label menu sengaja bukan cuma "Kategori" — kata kerja "Kelola" di depan langsung menandakan ini layar pengaturan/manajemen, bukan sekadar tampilan daftar, supaya lebih jelas buat pengguna awam.</p>
+<table>
+<tr><th style="width:30%">Fitur</th><th>Deskripsi</th></tr>
+<tr><td>Lihat daftar kategori</td><td>Dipisah 2 tab: Pemasukan &amp; Pengeluaran, diperbarui real-time (Firestore stream)</td></tr>
+<tr><td>Tambah kategori</td><td>Nama + tipe (mengikuti tab aktif saat FAB ditekan). Boleh dilakukan owner &amp; staff</td></tr>
+<tr><td>Ubah &amp; hapus kategori</td><td>Tombol ubah/hapus hanya tampil untuk owner; ditegakkan juga di <code>firestore.rules</code> (bukan cuma disembunyikan di UI)</td></tr>
+<tr><td>Dipakai di mana</td><td>Jadi sumber pilihan kategori pada langkah kedua saat mengisi entri di Laporan (lihat Bagian 5.3)</td></tr>
+</table>
+
+<h3>4.3 Laporan (Catat + Lihat) <span class="badge b-must">MUST</span></h3>
+<p class="small muted">Tidak ada menu "Transaksi" terpisah — layar ini merangkap pencatatan (tambah entri) dan riwayat/rekap sekaligus.</p>
+<table>
+<tr><th style="width:30%">Fitur</th><th>Deskripsi</th></tr>
+<tr><td>Tambah entri</td><td>Dua langkah: pilih Pemasukan/Pengeluaran dulu → pilih kategori (tersaring sesuai tipe) → isi nominal, tanggal, catatan opsional</td></tr>
+<tr><td>Daftar riwayat</td><td>Urut dari terbaru, dikelompokkan per tanggal, badge warna beda untuk masuk/keluar</td></tr>
+<tr><td>Filter</td><td>Berdasarkan tipe dan/atau kategori</td></tr>
+<tr><td>Ubah &amp; hapus entri</td><td>Hanya owner</td></tr>
+<tr><td>Siapa mencatat</td><td>Menyimpan siapa (owner/staff) yang menambahkan entri, untuk keterlacakan</td></tr>
+<tr><td>Ringkasan periode <span class="badge b-should">SHOULD</span></td><td>Total pemasukan/pengeluaran/saldo untuk rentang tanggal, rekap per kategori, grafik tren — bagian lanjutan di layar yang sama, bukan menu baru</td></tr>
+<tr><td>Export <span class="badge b-later">NANTI</span></td><td>Export ke PDF/Excel — Fase 4</td></tr>
+</table>
+
+<h3>4.4 Staff <span class="badge b-could">COULD</span></h3>
+<table>
+<tr><th style="width:30%">Fitur</th><th>Deskripsi</th></tr>
+<tr><td>Undang staff</td><td>Owner memasukkan email staff → sistem membuat akun via Cloud Function dengan <code>role: staff</code>, <code>ownerId: uid-owner</code></td></tr>
+<tr><td>Daftar staff</td><td>Owner melihat siapa saja staff yang punya akses ke workspace-nya</td></tr>
+<tr><td>Cabut akses</td><td>Owner menonaktifkan akun staff tertentu</td></tr>
+<tr><td>Batasan tampilan staff</td><td>Menu Staff &amp; Pengaturan lanjutan disembunyikan dari akun staff</td></tr>
+</table>
+
+<h3>4.5 Pengaturan <span class="badge b-should">SHOULD</span></h3>
+<table>
+<tr><th style="width:30%">Fitur</th><th>Deskripsi</th></tr>
+<tr><td>Profil usaha</td><td>Nama usaha, opsional logo</td></tr>
+<tr><td>Preferensi</td><td>Format mata uang/angka</td></tr>
+<tr><td>Akun</td><td>Ganti password, keluar (sudah ada di Home saat ini, dapat dipindah ke sini)</td></tr>
+</table>
+</div>
+
+<!-- ============ 5. ALUR APLIKASI ============ -->
+<div class="section">
+<h2>5. Alur Aplikasi (User Flow)</h2>
+
+<h3>5.1 Alur Buka Aplikasi &amp; Autentikasi</h3>
+<div class="flow">
+  <div class="flow-box"><strong>Splash</strong>Cek sesi Firebase Auth</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-branch">
+    <div class="flow-box"><strong>Sesi aktif</strong>Lanjut ke Home</div>
+    <div class="flow-box alt"><strong>Belum login</strong>Ke halaman Login</div>
+  </div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-branch">
+    <div class="flow-box"><strong>Home</strong>Menu utama</div>
+    <div class="flow-box alt"><strong>Login ⇄ Register</strong>Daftar bila belum punya akun</div>
+  </div>
+</div>
+
+<h3>5.2 Alur Navigasi Utama (dari Home)</h3>
+<div class="flow">
+  <div class="flow-box"><strong>Home</strong>Kartu profil + grid 4 menu</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-col">
+    <div class="flow-box">Laporan <span class="small muted">(catat + lihat)</span></div>
+    <div class="flow-box">Kelola Kategori</div>
+    <div class="flow-box">Staff <span class="small muted">(khusus owner)</span></div>
+    <div class="flow-box">Pengaturan</div>
+  </div>
+</div>
+
+<h3>5.3 Alur Isi Laporan — Catat Pemasukan/Pengeluaran (Fase 1 — inti aplikasi)</h3>
+<div class="flow">
+  <div class="flow-box"><strong>Layar Laporan</strong>Tombol tambah (+)</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-box"><strong>Langkah 1</strong>Pilih Pemasukan / Pengeluaran</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-box alt"><strong>Langkah 2</strong>Pilih kategori dari Kelola Kategori (tersaring sesuai tipe) — atau tambah kategori baru saat itu juga</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-box"><strong>Isi Detail</strong>Nominal, tanggal, catatan</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-box"><strong>Simpan</strong>Tersimpan ke workspace bersama</div>
+</div>
+<p class="small muted">Field "tipe" pada form Laporan mengambil datanya langsung dari kategori yang sudah dibuat di menu Kelola Kategori (Bagian 4.2) — dua modul ini saling terhubung: Kelola Kategori adalah master data, Laporan adalah tempat memakainya.</p>
+
+<h3>5.4 Alur Undang Staff (Fase 3)</h3>
+<div class="flow">
+  <div class="flow-box"><strong>Owner</strong>Menu Staff → "Undang Staff"</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-box"><strong>Input Email</strong>Owner masukkan email staff</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-box alt"><strong>Cloud Function</strong>Buat akun + set role: staff, ownerId: owner</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-box"><strong>Staff Login</strong>Di HP sendiri, masuk ke workspace owner</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-box"><strong>Akses Terbatas</strong>Bisa catat &amp; lihat, tidak bisa ubah/hapus</div>
+</div>
+
+<div class="note-box">
+  <strong>Catatan:</strong> Alur undang-staff butuh Cloud Function karena Firebase Auth di sisi klien tidak bisa membuat
+  akun baru tanpa membajak sesi login yang sedang aktif (punya owner). Ini alasan fitur Staff ditempatkan di Fase 3,
+  setelah fondasi transaksi/kategori/laporan berjalan.
+</div>
+</div>
+
+<!-- ============ 6. MODEL DATA ============ -->
+<div class="section">
+<h2>6. Model Data (Firestore)</h2>
+<p>Struktur data mengikuti pola <em>satu workspace per owner</em>, sehingga owner dan staff yang sama-sama tergabung dalam satu <code>ownerId</code> membaca/menulis ke koleksi yang sama.</p>
+
+<table>
+<tr><th style="width:32%">Koleksi / Path</th><th>Isi</th><th>Akses</th></tr>
+<tr><td><code>/users/{uid}</code></td><td>Profil akun: <code>email</code>, <code>role</code> (owner/staff), <code>ownerId</code></td><td>Hanya pemilik uid</td></tr>
+<tr><td><code>/workspaces/{ownerId}/categories/{id}</code></td><td>Kategori pemasukan/pengeluaran</td><td>Read+create: owner &amp; staff. Update+delete: owner saja</td></tr>
+<tr><td><code>/workspaces/{ownerId}/transactions/{id}</code></td><td>Catatan transaksi (tipe, nominal, kategori, tanggal, catatan, pencatat)</td><td>Read+create: owner &amp; staff. Update+delete: owner saja</td></tr>
+</table>
+
+<p class="small muted">Aturan akses ini sudah diimplementasikan di <code>firestore.rules</code> dan tinggal dipakai saat modul Kategori &amp; Transaksi dibangun — tidak perlu didesain ulang.</p>
+</div>
+
+<!-- ============ 7. NON-FUNGSIONAL ============ -->
+<div class="section">
+<h2>7. Kebutuhan Non-Fungsional</h2>
+<table>
+<tr><th style="width:26%">Aspek</th><th>Kebutuhan</th></tr>
+<tr><td>Kecepatan input</td><td>Mencatat 1 transaksi harus bisa selesai dalam &lt; 3 tap dari Home</td></tr>
+<tr><td>Konsistensi data</td><td>Perubahan dari satu device (mis. staff) harus tampak ke device lain (owner) secara near real-time via Firestore</td></tr>
+<tr><td>Keamanan &amp; isolasi data</td><td>Satu workspace tidak boleh bisa membaca data workspace lain — ditegakkan oleh Firestore Rules, bukan hanya validasi di klien</td></tr>
+<tr><td>Skala biaya</td><td>Firestore Spark (free tier: 50rb read / 20rb write per hari) sudah dikonfirmasi cukup untuk skala ~50 pengguna aktif</td></tr>
+<tr><td>Ketersediaan offline</td><td>Belum wajib di Fase 1–2; jadi bahan keputusan di Fase 4 (lihat Bagian 8)</td></tr>
+<tr><td>Konsistensi UX error</td><td>Semua pesan error/exception ditampilkan lewat <code>AppDialog</code>, bukan SnackBar (standar yang sudah dipakai di modul Auth)</td></tr>
+</table>
+</div>
+
+<!-- ============ 8. KEPUTUSAN TERBUKA ============ -->
+<div class="section">
+<h2>8. Keputusan Terbuka &amp; Risiko</h2>
+
+<h3>8.1 Nasib <code>DatabaseService</code> (sqflite)</h3>
+<p>Sudah digantikan Firestore sebagai sumber data utama, tapi filenya masih ada dan masih dipanggil sekali saat splash.
+Perlu diputuskan saat modul Laporan mulai dibangun: dijadikan <strong>cache offline</strong> (dibaca duluan saat tidak ada internet),
+atau <strong>dihapus total</strong> untuk menyederhanakan codebase.</p>
+
+<h3>8.2 Mekanisme Undang Staff</h3>
+<p>Butuh Cloud Function (server-side) karena Firebase Auth client SDK tidak bisa membuat akun user lain tanpa mengganti sesi login aktif.
+Ini menambah kebutuhan infrastruktur (Firebase Functions, kemungkinan perlu upgrade dari plan Spark ke Blaze — perlu dicek biayanya sebelum Fase 3 dimulai).</p>
+
+<h3>8.3 Granularitas Peran Staff</h3>
+<p>Saat ini baru ada satu level staff (create+read, tanpa update/delete). Jika ke depan dibutuhkan staff dengan wewenang berbeda
+(mis. staff senior yang boleh edit), model <code>role</code> perlu diperluas dari boolean owner/staff menjadi lebih granular.</p>
+
+<h3>8.4 Struktur Menu — Sudah Dikonfirmasi</h3>
+<p class="small">Revisi dari draf awal dokumen ini: semula ada 5 menu (termasuk "Transaksi" terpisah dari "Laporan").
+Pemilik produk mengonfirmasi <strong>tidak perlu menu Transaksi terpisah</strong> — mencatat pemasukan/pengeluaran
+melebur jadi satu dengan Laporan, dan Kategori berperan sebagai master data yang dipakai lewat proses <strong>dua
+langkah</strong> saat mengisi entri (pilih Pemasukan/Pengeluaran dulu, baru kategori muncul tersaring). Struktur final:
+Home → <strong>Laporan, Kelola Kategori, Staff, Pengaturan</strong> (4 menu). Dokumen ini (v1.1) dan implementasi kode
+sudah disesuaikan dengan keputusan ini.</p>
+</div>
+
+</body>
+</html>

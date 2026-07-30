@@ -154,19 +154,19 @@ class AppTextStyle {
   static const TextStyle labelLg = TextStyle(
     fontSize: AppFontSize.base,
     fontWeight: AppFontWeight.semiBold,
-    color: AppColors.textMuted,
+    color: AppColors.textPrimary,
     letterSpacing: 0.1,
   );
   static const TextStyle labelMd = TextStyle(
     fontSize: AppFontSize.sm,
     fontWeight: AppFontWeight.semiBold,
-    color: AppColors.textMuted,
+    color: AppColors.textPrimary,
     letterSpacing: 0.2,
   );
   static const TextStyle labelSm = TextStyle(
     fontSize: AppFontSize.xs,
     fontWeight: AppFontWeight.medium,
-    color: AppColors.textDisabled,
+    color: AppColors.textPrimary,
     letterSpacing: 0.3,
   );
 

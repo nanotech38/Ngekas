@@ -4,6 +4,8 @@ import 'package:ngekas/bloc/auth/auth_cubit.dart';
 import 'package:ngekas/const/app_theme_const.dart';
 import 'package:ngekas/logic/home_logic.dart';
 import 'package:ngekas/models/app_user.dart';
+import 'package:ngekas/models/menu_item.dart';
+import 'package:ngekas/screen/home_summary_section.dart';
 import 'package:ngekas/screen/login_screen.dart';
 import 'package:ngekas/services/navigation_services.dart';
 import 'package:ngekas/widget/app_dialog.dart';
@@ -13,21 +15,6 @@ import 'package:ngekas/widget/app_dialog.dart';
 // Placeholder minimal supaya alur register/login/auto-login/logout bisa
 // dites end-to-end. Konten sebenarnya (catatan penjualan) menyusul — menu
 // di bawah ini masih hardcode, belum diarahkan ke halaman sungguhan.
-
-class _MenuItem {
-  final IconData icon;
-  final String label;
-
-  const _MenuItem({required this.icon, required this.label});
-}
-
-const _menus = [
-  _MenuItem(icon: Icons.receipt_long_rounded, label: 'Transaksi'),
-  _MenuItem(icon: Icons.category_rounded, label: 'Kategori'),
-  _MenuItem(icon: Icons.bar_chart_rounded, label: 'Laporan'),
-  _MenuItem(icon: Icons.group_rounded, label: 'Staff'),
-  _MenuItem(icon: Icons.settings_rounded, label: 'Pengaturan'),
-];
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -58,30 +45,41 @@ class HomeScreen extends StatelessWidget {
             ),
           ],
         ),
-        body: SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              BlocBuilder<AuthCubit, AuthState>(
-                builder: (context, state) => _buildUserCard(state.user),
-              ),
-              const SizedBox(height: 24),
-              const Text('Menu', style: AppTextStyle.titleMd),
-              const SizedBox(height: 12),
-              GridView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: _menus.length,
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 3,
-                  mainAxisSpacing: 12,
-                  crossAxisSpacing: 12,
-                  childAspectRatio: 1,
+        body: SafeArea(
+          top: false,
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                BlocBuilder<AuthCubit, AuthState>(
+                  builder: (context, state) => _buildUserCard(state.user),
                 ),
-                itemBuilder: (context, index) => _buildMenuItem(_menus[index]),
-              ),
-            ],
+                const SizedBox(height: 24),
+                const Text('Menu', style: AppTextStyle.titleMd),
+                const SizedBox(height: 12),
+                GridView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: homeMenus.length,
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 3,
+                    mainAxisSpacing: 12,
+                    crossAxisSpacing: 12,
+                    childAspectRatio: 1,
+                  ),
+                  itemBuilder: (context, index) =>
+                      _buildMenuItem(context, homeMenus[index]),
+                ),
+                const SizedBox(height: 24),
+                BlocSelector<AuthCubit, AuthState, String?>(
+                  selector: (state) => state.user?.ownerId,
+                  builder: (context, ownerId) => ownerId == null
+                      ? const SizedBox.shrink()
+                      : HomeSummarySection(ownerId: ownerId),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -131,15 +129,13 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildMenuItem(_MenuItem menu) {
+  Widget _buildMenuItem(BuildContext context, MenuItem menu) {
     return Material(
       color: AppColors.surface,
       borderRadius: BorderRadius.circular(12),
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
-        onTap: () {
-          // TODO: arahkan ke halaman ${menu.label}
-        },
+        onTap: () => HomeLogic.handleMenuTap(context, menu),
         child: Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),

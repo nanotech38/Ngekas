@@ -60,13 +60,24 @@ class SplashCubit extends Cubit<SplashState> {
 
   SplashCubit() : super(SplashState.init());
 
-  Future<void> initialize() async {
+  // `loadProfile` dijalankan di titik progress 50% (setelah database siap),
+  // supaya progress bar bukan cuma animasi kosong tapi memang menunggu kerja
+  // nyata: separuh pertama untuk init database, separuh kedua untuk
+  // memuat profil user (role/ownerId) sebelum masuk homepage.
+  Future<void> initialize({required Future<void> Function() loadProfile}) async {
     AppLog.i(tag, 'initialize: start');
     try {
       await DatabaseService.instance.init((message, progress) {
-        emit(SplashState.loading(message: message, progress: progress));
+        emit(SplashState.loading(message: message, progress: progress * 0.5));
       });
+
       final isLoggedIn = AuthService.currentUser != null;
+      if (isLoggedIn) {
+        emit(SplashState.loading(message: 'Memuat profil...', progress: 0.5));
+        await loadProfile();
+        emit(SplashState.loading(message: 'Aplikasi siap!', progress: 0.9));
+      }
+
       AppLog.i(tag, 'initialize: done, isLoggedIn=$isLoggedIn');
       emit(
         SplashState.done(

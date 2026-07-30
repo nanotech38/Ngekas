@@ -63,6 +63,11 @@ dependencies:
 
   # Cloud Firestore — database bersama (owner & staff beda device) untuk data bisnis.
   cloud_firestore: ^6.7.1
+  shared_preferences: ^2.5.5
+
+  # Dropdown dengan fitur search bawaan — dipakai untuk pemilihan kategori
+  # saat mengisi Laporan.
+  dropdown_button2: ^3.1.0
 
 dev_dependencies:
   flutter_test:

@@ -43,6 +43,15 @@ service cloud.firestore {
         allow read, create: if isMemberOfWorkspace(ownerId);
         allow update, delete: if isMemberOfWorkspace(ownerId) && isOwnerRole();
       }
+
+      // Riwayat Aktivitas: catatan aksi add/update/delete, ditulis otomatis
+      // oleh TransactionCubit/CategoryCubit setelah aksi utamanya sukses.
+      // Immutable — sekali tercatat tidak boleh diubah/dihapus siapa pun,
+      // supaya tetap bisa dipercaya sebagai jejak aktivitas.
+      match /activity_logs/{logId} {
+        allow read, create: if isMemberOfWorkspace(ownerId);
+        allow update, delete: if false;
+      }
     }
   }
 }

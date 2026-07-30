@@ -53,7 +53,11 @@ class _SplashScreenState extends State<SplashScreen>
     );
 
     _logoController.forward().then((_) {
-      if (mounted) context.read<SplashCubit>().initialize();
+      if (mounted) {
+        context.read<SplashCubit>().initialize(
+          loadProfile: () => context.read<AuthCubit>().loadCurrentProfile(),
+        );
+      }
     });
   }
 
@@ -83,10 +87,11 @@ class _SplashScreenState extends State<SplashScreen>
         }
         if (state.rc == rcSuccess) {
           _animateProgress(1.0);
-          final authCubit = context.read<AuthCubit>();
+          // Profil (kalau isLoggedIn) sudah selesai dimuat di dalam
+          // SplashCubit.initialize sebelum state ini di-emit, jadi
+          // state.user di AuthCubit sudah siap saat HomeScreen tampil.
           Future.delayed(const Duration(milliseconds: 600), () {
             if (state.isLoggedIn) {
-              authCubit.loadCurrentProfile();
               NavigationService.get().pushAndRemoveAll(const HomeScreen());
             } else {
               NavigationService.get().pushAndRemoveAll(const LoginScreen());
@@ -188,7 +193,9 @@ class _SplashScreenState extends State<SplashScreen>
             if (isError) ...[
               const SizedBox(height: 16),
               GestureDetector(
-                onTap: () => context.read<SplashCubit>().initialize(),
+                onTap: () => context.read<SplashCubit>().initialize(
+                  loadProfile: () => context.read<AuthCubit>().loadCurrentProfile(),
+                ),
                 child: Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 24,

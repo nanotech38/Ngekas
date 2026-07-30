@@ -2,6 +2,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:ngekas/const/app_log_const.dart';
 import 'package:ngekas/models/app_user.dart';
 import 'package:ngekas/services/auth_service.dart';
+import 'package:ngekas/services/user_profile_cache_service.dart';
 import 'package:ngekas/services/user_profile_service.dart';
 
 enum AuthStatus {
@@ -58,6 +59,9 @@ class AuthCubit extends Cubit<AuthState> {
       final profile = await UserProfileService.fetchProfile(
         credential.user!.uid,
       );
+      if (profile != null) {
+        await UserProfileCacheService.saveProfile(profile);
+      }
       AppLog.i(tag, 'login: success');
       emit(AuthState.loginSuccess(user: profile));
     } catch (e, st) {
@@ -99,6 +103,7 @@ class AuthCubit extends Cubit<AuthState> {
     AppLog.i(tag, 'logout: start');
     try {
       await AuthService.logout();
+      await UserProfileCacheService.clear();
       AppLog.i(tag, 'logout: success');
       emit(AuthState.loggedOut());
     } catch (e, st) {
@@ -115,7 +120,19 @@ class AuthCubit extends Cubit<AuthState> {
 
     AppLog.i(tag, 'loadCurrentProfile: start');
     try {
+      // Cek cache lokal dulu — kalau ada dan masih untuk uid yang sama,
+      // langsung pakai tanpa fetch ke Firestore supaya auto-login lebih cepat.
+      final cached = await UserProfileCacheService.getCachedProfile();
+      if (cached != null && cached.uid == currentUser.uid) {
+        AppLog.i(tag, 'loadCurrentProfile: pakai cache');
+        emit(AuthState.loginSuccess(user: cached));
+        return;
+      }
+
       final profile = await UserProfileService.fetchProfile(currentUser.uid);
+      if (profile != null) {
+        await UserProfileCacheService.saveProfile(profile);
+      }
       AppLog.i(tag, 'loadCurrentProfile: success');
       emit(AuthState.loginSuccess(user: profile));
     } catch (e, st) {

@@ -80,10 +80,7 @@ class _AppTextFieldState extends State<AppTextField> {
 
   List<TextInputFormatter> get _inputFormatters {
     if (widget.type == FieldType.currency) {
-      return [
-        FilteringTextInputFormatter.digitsOnly,
-        _CurrencyInputFormatter(),
-      ];
+      return [FilteringTextInputFormatter.digitsOnly, _CurrencyInputFormatter()];
     }
     if (widget.type == FieldType.number) {
       return [FilteringTextInputFormatter.digitsOnly];
@@ -103,17 +100,12 @@ class _AppTextFieldState extends State<AppTextField> {
           children: [
             Text(
               widget.label,
-              style: AppTextStyle.labelLg.copyWith(
-                color: _isFocused ? AppColors.primary : AppColors.textMuted,
-              ),
+              style: AppTextStyle.labelLg.copyWith(color: _isFocused ? AppColors.primary : AppColors.textMuted),
             ),
             if (widget.isRequired && widget.showRequiredMark)
               Text(
                 ' *',
-                style: TextStyle(
-                  color: colorScheme.error,
-                  fontWeight: FontWeight.w700,
-                ),
+                style: TextStyle(color: colorScheme.error, fontWeight: FontWeight.w700),
               ),
           ],
         ),
@@ -127,20 +119,14 @@ class _AppTextFieldState extends State<AppTextField> {
           inputFormatters: _inputFormatters,
           maxLines: widget.type == FieldType.password
               ? 1
-              : (widget.maxLines ??
-                    (widget.type == FieldType.multiline ? 4 : 1)),
+              : (widget.maxLines ?? (widget.type == FieldType.multiline ? 4 : 1)),
           textInputAction:
               widget.textInputAction ??
-              (widget.type == FieldType.multiline
-                  ? TextInputAction.newline
-                  : TextInputAction.next),
+              (widget.type == FieldType.multiline ? TextInputAction.newline : TextInputAction.next),
           onChanged: widget.onChanged,
           onFieldSubmitted: widget.onSubmitted,
           validator: widget.validator,
-          style: AppTextStyle.bodyLg.copyWith(
-            color: AppColors.textPrimary,
-            fontWeight: AppFontWeight.medium,
-          ),
+          style: AppTextStyle.bodySm.copyWith(color: AppColors.textPrimary, fontWeight: AppFontWeight.medium),
           decoration: InputDecoration(
             hintText: widget.hint,
             hintStyle: const TextStyle(
@@ -149,15 +135,17 @@ class _AppTextFieldState extends State<AppTextField> {
               fontSize: AppFontSize.md,
             ),
             filled: true,
-            fillColor: widget.enabled
-                ? AppColors.surface
-                : AppColors.background,
+            fillColor: widget.enabled ? AppColors.surface : AppColors.background,
             prefixIcon: _buildPrefixIcon(colorScheme),
+            // Default InputDecorator memaksa prefixIcon minimal 48x48 (pas
+            // untuk Icon asli), tapi bikin "Rp" (cuma Text pendek) tidak
+            // center vertikal. Kecilkan constraint-nya khusus currency biar
+            // areanya pas mengikuti ukuran teks, bukan kotak 48x48 kosong.
+            prefixIconConstraints: widget.type == FieldType.currency
+                ? const BoxConstraints(minWidth: 0, minHeight: 0)
+                : null,
             suffixIcon: _buildSuffixIcon(colorScheme),
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 14,
-            ),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             border: _buildBorder(AppColors.border),
             enabledBorder: _buildBorder(AppColors.border),
             focusedBorder: _buildBorder(AppColors.primary, width: 2),
@@ -177,9 +165,8 @@ class _AppTextFieldState extends State<AppTextField> {
 
   Widget? _buildPrefixIcon(ColorScheme colorScheme) {
     if (widget.type == FieldType.currency) {
-      return Container(
-        constraints: const BoxConstraints(minWidth: 48),
-        alignment: Alignment.center,
+      return Padding(
+        padding: const EdgeInsets.only(left: 16, right: 8),
         child: Text(
           'Rp',
           style: TextStyle(
@@ -208,20 +195,14 @@ class _AppTextFieldState extends State<AppTextField> {
       }
     }
 
-    return Icon(
-      icon,
-      color: _isFocused ? AppColors.primary : AppColors.textDisabled,
-      size: 20,
-    );
+    return Icon(icon, color: _isFocused ? AppColors.primary : AppColors.textDisabled, size: 20);
   }
 
   Widget? _buildSuffixIcon(ColorScheme colorScheme) {
     if (widget.type == FieldType.password) {
       return IconButton(
         icon: Icon(
-          _obscureText
-              ? Icons.visibility_outlined
-              : Icons.visibility_off_outlined,
+          _obscureText ? Icons.visibility_outlined : Icons.visibility_off_outlined,
           color: _isFocused ? AppColors.primary : AppColors.textDisabled,
           size: 20,
         ),
@@ -241,10 +222,7 @@ class _AppTextFieldState extends State<AppTextField> {
 
 class _CurrencyInputFormatter extends TextInputFormatter {
   @override
-  TextEditingValue formatEditUpdate(
-    TextEditingValue oldValue,
-    TextEditingValue newValue,
-  ) {
+  TextEditingValue formatEditUpdate(TextEditingValue oldValue, TextEditingValue newValue) {
     if (newValue.text.isEmpty) return newValue;
 
     final digits = newValue.text.replaceAll('.', '');
