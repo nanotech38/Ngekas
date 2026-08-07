@@ -33,12 +33,10 @@ class TransactionModel {
   factory TransactionModel.fromMap(String id, Map<String, dynamic> map) {
     return TransactionModel(
       id: id,
-      type: (map['type'] as String?) == 'expense'
-          ? CategoryType.expense
-          : CategoryType.income,
+      type: (map['type'] as String?) == 'expense' ? CategoryType.expense : CategoryType.income,
       categoryId: map['categoryId'] as String? ?? '',
       categoryName: map['categoryName'] as String? ?? '',
-      itemName: map['itemName'] as String? ?? '',
+      itemName: map['itemName'] as String? ?? '-',
       quantity: (map['quantity'] as num?)?.toInt() ?? 1,
       amount: (map['amount'] as num?)?.toInt() ?? 0,
       date: (map['date'] as Timestamp?)?.toDate() ?? DateTime.now(),

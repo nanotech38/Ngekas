@@ -53,12 +53,8 @@ class _ReportEntryFormSheetState extends State<ReportEntryFormSheet> {
 
     final existing = widget.existing;
     _itemNameController = TextEditingController(text: existing?.itemName ?? '');
-    _quantityController = TextEditingController(
-      text: (existing?.quantity ?? 1).toString(),
-    );
-    _amountController = TextEditingController(
-      text: existing == null ? '' : AppCurrency.formatDigits(existing.amount),
-    );
+    _quantityController = TextEditingController(text: (existing?.quantity ?? 1).toString());
+    _amountController = TextEditingController(text: existing == null ? '' : AppCurrency.formatDigits(existing.amount));
     _noteController = TextEditingController(text: existing?.note ?? '');
     _categoryId = existing?.categoryId;
     _categoryName = existing?.categoryName ?? '';
@@ -87,8 +83,7 @@ class _ReportEntryFormSheetState extends State<ReportEntryFormSheet> {
   void _handleSave() {
     if (!_formKey.currentState!.validate()) return;
 
-    final amount =
-        int.tryParse(_amountController.text.replaceAll('.', '')) ?? 0;
+    final amount = int.tryParse(_amountController.text.replaceAll('.', '')) ?? 0;
     final quantity = int.tryParse(_quantityController.text) ?? 1;
     final itemName = _itemNameController.text.trim();
 
@@ -131,13 +126,8 @@ class _ReportEntryFormSheetState extends State<ReportEntryFormSheet> {
         } else if (state.status == TransactionStatus.updateSuccess) {
           Navigator.of(context).pop();
           AppToast.showSuccess(context, 'Laporan diperbarui');
-        } else if (state.status == TransactionStatus.addError ||
-            state.status == TransactionStatus.updateError) {
-          AppDialog.showError(
-            context,
-            title: 'Gagal',
-            message: state.errorMessage,
-          );
+        } else if (state.status == TransactionStatus.addError || state.status == TransactionStatus.updateError) {
+          AppDialog.showError(context, title: 'Gagal', message: state.errorMessage);
         }
       },
       child: Form(
@@ -172,13 +162,11 @@ class _ReportEntryFormSheetState extends State<ReportEntryFormSheet> {
                 Expanded(
                   flex: 3,
                   child: AppTextField(
-                    label: 'Nama Barang',
-                    hint: 'Contoh: Pocari',
+                    label: 'Nama Item',
+                    hint: 'Nama Item',
                     controller: _itemNameController,
                     isRequired: true,
-                    validator: (value) => (value == null || value.trim().isEmpty)
-                        ? 'Nama barang wajib diisi'
-                        : null,
+                    validator: (value) => (value == null || value.trim().isEmpty) ? 'Nama Item wajib diisi' : null,
                   ),
                 ),
                 const SizedBox(width: 12),

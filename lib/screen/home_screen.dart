@@ -3,156 +3,92 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:ngekas/bloc/auth/auth_cubit.dart';
 import 'package:ngekas/const/app_theme_const.dart';
 import 'package:ngekas/logic/home_logic.dart';
-import 'package:ngekas/models/app_user.dart';
-import 'package:ngekas/models/menu_item.dart';
-import 'package:ngekas/screen/home_summary_section.dart';
+import 'package:ngekas/screen/category_screen.dart';
+import 'package:ngekas/screen/home/home_tab.dart';
+import 'package:ngekas/screen/home/laporan_tab.dart';
 import 'package:ngekas/screen/login_screen.dart';
+import 'package:ngekas/screen/profile_screen.dart';
 import 'package:ngekas/services/navigation_services.dart';
+import 'package:ngekas/template/base_template.dart';
 import 'package:ngekas/widget/app_dialog.dart';
 
-// ─── HomeScreen ─────────────────────────────────────────────────────────────
-//
-// Placeholder minimal supaya alur register/login/auto-login/logout bisa
-// dites end-to-end. Konten sebenarnya (catatan penjualan) menyusul — menu
-// di bawah ini masih hardcode, belum diarahkan ke halaman sungguhan.
-
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
   @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  int _index = 0;
+
+  static const _tabs = [HomeTab(), LaporanTab(), CategoryScreen(), ProfileScreen()];
+
+  @override
   Widget build(BuildContext context) {
+    final showAddTransactionFab = _index == 0 || _index == 1;
+
     return BlocListener<AuthCubit, AuthState>(
       listener: (context, state) {
         if (state.status == AuthStatus.loggedOut) {
           NavigationService.get().pushAndRemoveAll(const LoginScreen());
         } else if (state.status == AuthStatus.error) {
-          AppDialog.showError(
-            context,
-            title: 'Gagal Keluar',
-            message: state.errorMessage,
-          );
+          AppDialog.showError(context, title: 'Gagal Keluar', message: state.errorMessage);
         }
       },
-      child: Scaffold(
+      child: BaseTemplate(
         backgroundColor: AppColors.background,
-        appBar: AppBar(
-          title: const Text('Beranda'),
-          actions: [
-            IconButton(
-              tooltip: 'Keluar',
-              icon: const Icon(Icons.logout_rounded),
-              onPressed: () => HomeLogic.handleLogout(context),
+        resizeToAvoidBottomInset: false,
+        safeAreaTop: false,
+        safeAreaBottom: false,
+        floatingActionButton: showAddTransactionFab
+            ? FloatingActionButton(
+                heroTag: 'home_add_transaction_fab',
+                backgroundColor: AppColors.primary,
+                shape: const CircleBorder(),
+                onPressed: () => HomeLogic.openReportPicker(context),
+                child: const Icon(Icons.add_rounded, color: Colors.white),
+              )
+            : null,
+        floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+        bottomNavigationBar: BottomAppBar(
+          shape: showAddTransactionFab ? const CircularNotchedRectangle() : null,
+          notchMargin: 8,
+          padding: EdgeInsets.zero,
+          child: SizedBox(
+            height: 60,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _buildNavItem(icon: Icons.home_rounded, label: 'Beranda', index: 0),
+                _buildNavItem(icon: Icons.receipt_long_rounded, label: 'Laporan', index: 1),
+                const SizedBox(width: 56),
+                _buildNavItem(icon: Icons.category_rounded, label: 'Kategori', index: 2),
+                _buildNavItem(icon: Icons.person_rounded, label: 'Profil', index: 3),
+              ],
             ),
+          ),
+        ),
+        child: IndexedStack(index: _index, children: _tabs),
+      ),
+    );
+  }
+
+  Widget _buildNavItem({required IconData icon, required String label, required int index}) {
+    final selected = _index == index;
+    final color = selected ? AppColors.primary : AppColors.textDisabled;
+
+    return InkWell(
+      onTap: () => setState(() => _index = index),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, color: color, size: 24),
+            const SizedBox(height: 2),
+            Text(label, style: AppTextStyle.labelSm.copyWith(color: color)),
           ],
-        ),
-        body: SafeArea(
-          top: false,
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                BlocBuilder<AuthCubit, AuthState>(
-                  builder: (context, state) => _buildUserCard(state.user),
-                ),
-                const SizedBox(height: 24),
-                const Text('Menu', style: AppTextStyle.titleMd),
-                const SizedBox(height: 12),
-                GridView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: homeMenus.length,
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 3,
-                    mainAxisSpacing: 12,
-                    crossAxisSpacing: 12,
-                    childAspectRatio: 1,
-                  ),
-                  itemBuilder: (context, index) =>
-                      _buildMenuItem(context, homeMenus[index]),
-                ),
-                const SizedBox(height: 24),
-                BlocSelector<AuthCubit, AuthState, String?>(
-                  selector: (state) => state.user?.ownerId,
-                  builder: (context, ownerId) => ownerId == null
-                      ? const SizedBox.shrink()
-                      : HomeSummarySection(ownerId: ownerId),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildUserCard(AppUser? user) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 48,
-            height: 48,
-            decoration: const BoxDecoration(
-              color: AppColors.primaryContainer,
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(Icons.person_rounded, color: AppColors.primary),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  user?.email ?? '-',
-                  style: AppTextStyle.titleSm,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  user?.role == UserRole.owner ? 'Owner' : 'Staff',
-                  style: AppTextStyle.bodySm,
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMenuItem(BuildContext context, MenuItem menu) {
-    return Material(
-      color: AppColors.surface,
-      borderRadius: BorderRadius.circular(12),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(12),
-        onTap: () => HomeLogic.handleMenuTap(context, menu),
-        child: Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: AppColors.border),
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(menu.icon, color: AppColors.primary, size: 28),
-              const SizedBox(height: 8),
-              Text(
-                menu.label,
-                style: AppTextStyle.labelMd,
-                textAlign: TextAlign.center,
-              ),
-            ],
-          ),
         ),
       ),
     );

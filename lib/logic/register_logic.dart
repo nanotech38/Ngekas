@@ -19,6 +19,7 @@ class RegisterLogic {
     required GlobalKey<FormState> formKey,
     required String email,
     required String password,
+    String? inviteCode,
   }) {
     FocusScope.of(context).unfocus();
 
@@ -28,6 +29,10 @@ class RegisterLogic {
     }
 
     AppLog.i(tag, 'handleRegister: form valid');
-    context.read<AuthCubit>().register(email: email, password: password);
+    context.read<AuthCubit>().register(
+      email: email,
+      password: password,
+      inviteCode: inviteCode,
+    );
   }
 }

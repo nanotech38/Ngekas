@@ -118,6 +118,14 @@ class TransactionCubit extends Cubit<TransactionState> {
         emit(state.copyWith(status: TransactionStatus.loaded, all: ofType));
       },
       onError: (Object e) {
+        // Sama seperti CategoryCubit.watch — kalau ini muncul pas/abis
+        // logout (listener belum sempat di-cancel duluan sebelum Auth
+        // sign-out), tidak ada yang perlu ditampilkan lagi ke user yang
+        // sudah keluar. Cukup log, jangan emit streamError.
+        if (AuthService.currentUser == null) {
+          AppLog.i(tag, 'watch: stream error diabaikan (user sudah logout)');
+          return;
+        }
         AppLog.e(tag, 'watch: error', error: e);
         emit(
           state.copyWith(

@@ -85,6 +85,18 @@ class CategoryCubit extends Cubit<CategoryState> {
         );
       },
       onError: (Object e) {
+        // Kalau ini muncul pas/abis logout, listener ini belum sempat
+        // di-cancel (CategoryScreen tetap hidup di IndexedStack shell Home
+        // biar state tab lain tidak hilang) padahal Auth sudah sign-out
+        // duluan — Firestore langsung tolak listener yang masih terbuka
+        // (permission-denied) sebelum widget-nya sempat unmount. Tidak ada
+        // yang perlu dikasih tahu lagi ke user yang sudah keluar, jadi cukup
+        // di-log, jangan emit streamError (yang bakal munculin dialog
+        // "Gagal" nyasar pas proses logout).
+        if (AuthService.currentUser == null) {
+          AppLog.i(tag, 'watch: stream error diabaikan (user sudah logout)');
+          return;
+        }
         AppLog.e(tag, 'watch: error', error: e);
         emit(
           state.copyWith(

@@ -16,23 +16,16 @@ class SplashScreen extends StatefulWidget {
   State<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen>
-    with TickerProviderStateMixin {
+class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMixin {
   late AnimationController _logoController;
   late Animation<double> _logoOpacity;
   late Animation<Offset> _logoSlide;
-
-  late AnimationController _progressController;
-  late Animation<double> _progressAnimation;
 
   @override
   void initState() {
     super.initState();
 
-    _logoController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 900),
-    );
+    _logoController = AnimationController(vsync: this, duration: const Duration(milliseconds: 900));
     _logoOpacity = CurvedAnimation(
       parent: _logoController,
       curve: const Interval(0.0, 0.7, curve: Curves.easeOut),
@@ -40,23 +33,11 @@ class _SplashScreenState extends State<SplashScreen>
     _logoSlide = Tween<Offset>(
       begin: const Offset(0, 0.25),
       end: Offset.zero,
-    ).animate(
-      CurvedAnimation(parent: _logoController, curve: Curves.easeOutCubic),
-    );
-
-    _progressController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 500),
-    );
-    _progressAnimation = Tween<double>(begin: 0.0, end: 0.0).animate(
-      CurvedAnimation(parent: _progressController, curve: Curves.easeInOut),
-    );
+    ).animate(CurvedAnimation(parent: _logoController, curve: Curves.easeOutCubic));
 
     _logoController.forward().then((_) {
       if (mounted) {
-        context.read<SplashCubit>().initialize(
-          loadProfile: () => context.read<AuthCubit>().loadCurrentProfile(),
-        );
+        context.read<SplashCubit>().initialize(loadProfile: () => context.read<AuthCubit>().loadCurrentProfile());
       }
     });
   }
@@ -64,29 +45,14 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   void dispose() {
     _logoController.dispose();
-    _progressController.dispose();
     super.dispose();
-  }
-
-  void _animateProgress(double target) {
-    final current = _progressAnimation.value;
-    _progressAnimation = Tween<double>(begin: current, end: target).animate(
-      CurvedAnimation(parent: _progressController, curve: Curves.easeInOut),
-    );
-    _progressController
-      ..reset()
-      ..forward();
   }
 
   @override
   Widget build(BuildContext context) {
     return BlocListener<SplashCubit, SplashState>(
       listener: (context, state) {
-        if (state.inLoading) {
-          _animateProgress(state.progress);
-        }
         if (state.rc == rcSuccess) {
-          _animateProgress(1.0);
           // Profil (kalau isLoggedIn) sudah selesai dimuat di dalam
           // SplashCubit.initialize sebelum state ini di-emit, jadi
           // state.user di AuthCubit sudah siap saat HomeScreen tampil.
@@ -104,9 +70,9 @@ class _SplashScreenState extends State<SplashScreen>
           children: [
             const Spacer(flex: 2),
             _buildLogo(),
-            const Spacer(flex: 3),
+            const SizedBox(height: 40),
             _buildProgressSection(),
-            const SizedBox(height: 48),
+            const Spacer(flex: 3),
           ],
         ),
       ),
@@ -120,22 +86,9 @@ class _SplashScreenState extends State<SplashScreen>
         position: _logoSlide,
         child: Column(
           children: [
-            Container(
-              width: 96,
-              height: 96,
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(28),
-                border: Border.all(
-                  color: Colors.white.withValues(alpha: 0.3),
-                  width: 1.5,
-                ),
-              ),
-              child: const Icon(
-                Icons.receipt_long_rounded,
-                size: 52,
-                color: Colors.white,
-              ),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(28),
+              child: Image.asset('assets/logo/icon_app.png', width: 96, height: 96),
             ),
             const SizedBox(height: 24),
             const Text(
@@ -149,7 +102,7 @@ class _SplashScreenState extends State<SplashScreen>
             ),
             const SizedBox(height: 8),
             Text(
-              'Catatan Penjualan Usahamu',
+              'Catatan Pemasukan & Pengeluaran',
               style: TextStyle(
                 fontSize: AppFontSize.md,
                 fontWeight: AppFontWeight.regular,
@@ -167,104 +120,50 @@ class _SplashScreenState extends State<SplashScreen>
     return BlocBuilder<SplashCubit, SplashState>(
       builder: (context, state) {
         final isError = state.rc == rcError;
-        final message = state.message.isNotEmpty
-            ? state.message
-            : 'Memulai...';
+
+        if (!isError) {
+          return const SizedBox(
+            width: 32,
+            height: 32,
+            child: CircularProgressIndicator(strokeWidth: 3, color: Colors.white, strokeCap: StrokeCap.round),
+          );
+        }
+
+        final message = state.message.isNotEmpty ? state.message : 'Terjadi kesalahan';
 
         return Column(
           children: [
-            _buildCircularProgress(isError: isError),
-            const SizedBox(height: 20),
-            AnimatedSwitcher(
-              duration: const Duration(milliseconds: 300),
-              child: Text(
-                message,
-                key: ValueKey(message),
-                style: TextStyle(
-                  fontSize: AppFontSize.sm,
-                  fontWeight: AppFontWeight.medium,
-                  color: isError
-                      ? const Color(0xFFFCA5A5)
-                      : Colors.white.withValues(alpha: 0.8),
-                  letterSpacing: 0.2,
+            const Icon(Icons.error_outline_rounded, color: Color(0xFFFCA5A5), size: 32),
+            const SizedBox(height: 16),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: AppFontSize.sm,
+                fontWeight: AppFontWeight.medium,
+                color: Color(0xFFFCA5A5),
+                letterSpacing: 0.2,
+              ),
+            ),
+            const SizedBox(height: 16),
+            GestureDetector(
+              onTap: () => context.read<SplashCubit>().initialize(
+                loadProfile: () => context.read<AuthCubit>().loadCurrentProfile(),
+              ),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(color: Colors.white.withValues(alpha: 0.4)),
+                ),
+                child: const Text(
+                  'Coba Lagi',
+                  style: TextStyle(color: Colors.white, fontWeight: AppFontWeight.semiBold, fontSize: AppFontSize.sm),
                 ),
               ),
             ),
-            if (isError) ...[
-              const SizedBox(height: 16),
-              GestureDetector(
-                onTap: () => context.read<SplashCubit>().initialize(
-                  loadProfile: () => context.read<AuthCubit>().loadCurrentProfile(),
-                ),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 24,
-                    vertical: 10,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(24),
-                    border: Border.all(
-                      color: Colors.white.withValues(alpha: 0.4),
-                    ),
-                  ),
-                  child: const Text(
-                    'Coba Lagi',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: AppFontWeight.semiBold,
-                      fontSize: AppFontSize.sm,
-                    ),
-                  ),
-                ),
-              ),
-            ],
           ],
-        );
-      },
-    );
-  }
-
-  Widget _buildCircularProgress({required bool isError}) {
-    return AnimatedBuilder(
-      animation: _progressAnimation,
-      builder: (context, _) {
-        final progress = _progressAnimation.value;
-        final percent = (progress * 100).toInt();
-
-        return SizedBox(
-          width: 88,
-          height: 88,
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              SizedBox.expand(
-                child: CircularProgressIndicator(
-                  value: 1.0,
-                  strokeWidth: 5,
-                  color: Colors.white.withValues(alpha: 0.15),
-                  strokeCap: StrokeCap.round,
-                ),
-              ),
-              SizedBox.expand(
-                child: CircularProgressIndicator(
-                  value: progress,
-                  strokeWidth: 5,
-                  color: isError ? const Color(0xFFFCA5A5) : Colors.white,
-                  strokeCap: StrokeCap.round,
-                ),
-              ),
-              Text(
-                '$percent%',
-                style: const TextStyle(
-                  fontSize: AppFontSize.xl,
-                  fontWeight: AppFontWeight.bold,
-                  color: Colors.white,
-                  height: 1,
-                ),
-              ),
-            ],
-          ),
         );
       },
     );

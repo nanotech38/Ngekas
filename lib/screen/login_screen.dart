@@ -108,22 +108,9 @@ class _LoginScreenState extends State<LoginScreen>
   Widget _buildHeader() {
     return Column(
       children: [
-        Container(
-          width: 72,
-          height: 72,
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.15),
-            borderRadius: BorderRadius.circular(22),
-            border: Border.all(
-              color: Colors.white.withValues(alpha: 0.3),
-              width: 1.5,
-            ),
-          ),
-          child: const Icon(
-            Icons.receipt_long_rounded,
-            size: 38,
-            color: Colors.white,
-          ),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(22),
+          child: Image.asset('assets/logo/icon_app.png', width: 72, height: 72),
         ),
         const SizedBox(height: 16),
         const Text(
@@ -137,7 +124,7 @@ class _LoginScreenState extends State<LoginScreen>
         ),
         const SizedBox(height: 4),
         Text(
-          'Masuk untuk mulai mencatat penjualanmu',
+          'Masuk untuk mulai mencatat pemasukan & pengeluaranmu',
           textAlign: TextAlign.center,
           style: TextStyle(
             fontSize: AppFontSize.md,

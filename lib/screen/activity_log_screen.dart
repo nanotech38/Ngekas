@@ -5,13 +5,14 @@ import 'package:ngekas/const/app_date_const.dart';
 import 'package:ngekas/const/app_theme_const.dart';
 import 'package:ngekas/models/activity_log_model.dart';
 import 'package:ngekas/services/activity_log_service.dart';
+import 'package:ngekas/template/base_template.dart';
 
 // ─── ActivityLogScreen ──────────────────────────────────────────────────────
 //
 // Menu "Riwayat Aktivitas" — daftar aksi tambah/ubah/hapus laporan & kategori
 // yang pernah dilakukan siapa saja di workspace ini. Murni tampilan (tidak
 // ada aksi apa pun di sini), jadi ambil data langsung lewat StreamBuilder,
-// sama pola dengan HomeSummarySection & CategoryDropdownField.
+// sama pola dengan HomeTab & CategoryDropdownField.
 
 class ActivityLogScreen extends StatelessWidget {
   const ActivityLogScreen({super.key});
@@ -20,10 +21,10 @@ class ActivityLogScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final ownerId = context.read<AuthCubit>().state.user!.ownerId;
 
-    return Scaffold(
+    return BaseTemplate(
       backgroundColor: AppColors.background,
       appBar: AppBar(title: const Text('Riwayat Aktivitas')),
-      body: StreamBuilder<List<ActivityLogModel>>(
+      child: StreamBuilder<List<ActivityLogModel>>(
         stream: ActivityLogService.watch(ownerId),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
@@ -111,7 +112,11 @@ class ActivityLogScreen extends StatelessWidget {
   }
 
   String _actionLabel(ActivityAction action, ActivityEntity entity) {
-    final noun = entity == ActivityEntity.transaction ? 'laporan' : 'kategori';
+    final noun = switch (entity) {
+      ActivityEntity.transaction => 'laporan',
+      ActivityEntity.category => 'kategori',
+      ActivityEntity.member => 'anggota',
+    };
     switch (action) {
       case ActivityAction.created:
         return 'menambahkan $noun';

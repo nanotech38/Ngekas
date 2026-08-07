@@ -1,5 +1,5 @@
 name: ngekas
-description: "Aplikasi catatan penjualan usaha"
+description: "Aplikasi catatan pemasukan dan pengeluaran usaha"
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
@@ -43,7 +43,7 @@ dependencies:
   # Mempermudah perbandingan objek state (value equality) tanpa override manual.
   equatable: ^2.0.8
 
-  # Database Local — penyimpanan data transaksi/penjualan di perangkat (SQLite).
+  # Database Local — penyimpanan data transaksi pemasukan/pengeluaran di perangkat (SQLite).
   sqflite: ^2.4.2+1
   
   # Utility untuk menyusun path file database secara cross-platform.
@@ -80,6 +80,16 @@ dev_dependencies:
   # rules and activating additional ones.
   flutter_lints: ^6.0.0
 
+  # Generator ikon aplikasi (Android/iOS) dari satu file source di assets/logo/.
+  flutter_launcher_icons: ^0.14.4
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/logo/icon_app.png"
+  min_sdk_android: 21
+  remove_alpha_ios: true
+
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
 
@@ -92,9 +102,8 @@ flutter:
   uses-material-design: true
 
   # To add assets to your application, add an assets section, like this:
-  # assets:
-  #   - images/a_dot_burr.jpeg
-  #   - images/a_dot_ham.jpeg
+  assets:
+    - assets/logo/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

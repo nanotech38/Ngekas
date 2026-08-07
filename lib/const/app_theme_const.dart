@@ -41,7 +41,7 @@ class AppColors {
   static const Color info = Color(0xFF0EA5E9);
   static const Color infoLight = Color(0xFFE0F2FE);
 
-  // Income & Expense — khusus catatan penjualan
+  // Income & Expense — khusus catatan pemasukan & pengeluaran
   static const Color income = Color(0xFF16A34A);
   static const Color incomeBackground = Color(0xFFDCFCE7);
   static const Color expense = Color(0xFFEF4444);

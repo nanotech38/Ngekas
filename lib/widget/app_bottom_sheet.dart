@@ -36,23 +36,30 @@ class AppBottomSheet {
             top: 12,
             bottom: MediaQuery.of(context).viewInsets.bottom + 20,
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  margin: const EdgeInsets.only(bottom: 16),
-                  decoration: BoxDecoration(
-                    color: AppColors.border,
-                    borderRadius: BorderRadius.circular(4),
+          // SingleChildScrollView (bukan cuma Column biasa) supaya waktu
+          // keyboard muncul dan sisa ruang sheet lebih pendek dari isi form,
+          // field yang lagi difokus (mis. Catatan di paling bawah) masih
+          // bisa di-scroll ke atas keyboard, bukan ketutupan tanpa jalan
+          // keluar.
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    margin: const EdgeInsets.only(bottom: 16),
+                    decoration: BoxDecoration(
+                      color: AppColors.border,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
                   ),
                 ),
-              ),
-              builder(context),
-            ],
+                builder(context),
+              ],
+            ),
           ),
         ),
       ),

@@ -11,7 +11,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 enum ActivityAction { created, updated, deleted }
 
-enum ActivityEntity { transaction, category }
+enum ActivityEntity { transaction, category, member }
 
 class ActivityLogModel {
   final String id;

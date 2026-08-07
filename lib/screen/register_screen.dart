@@ -24,9 +24,11 @@ class _RegisterScreenState extends State<RegisterScreen>
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
+  final _inviteCodeController = TextEditingController();
   final _emailFocus = FocusNode();
   final _passwordFocus = FocusNode();
   final _confirmPasswordFocus = FocusNode();
+  final _inviteCodeFocus = FocusNode();
 
   late final AnimationController _animController;
   late final Animation<double> _headerOpacity;
@@ -58,9 +60,11 @@ class _RegisterScreenState extends State<RegisterScreen>
     _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
+    _inviteCodeController.dispose();
     _emailFocus.dispose();
     _passwordFocus.dispose();
     _confirmPasswordFocus.dispose();
+    _inviteCodeFocus.dispose();
     super.dispose();
   }
 
@@ -70,6 +74,7 @@ class _RegisterScreenState extends State<RegisterScreen>
       formKey: _formKey,
       email: _emailController.text.trim(),
       password: _passwordController.text,
+      inviteCode: _inviteCodeController.text.trim(),
     );
   }
 
@@ -141,7 +146,7 @@ class _RegisterScreenState extends State<RegisterScreen>
         ),
         const SizedBox(height: 4),
         Text(
-          'Daftar untuk mulai mencatat penjualanmu',
+          'Daftar untuk mulai mencatat pemasukan & pengeluaranmu',
           textAlign: TextAlign.center,
           style: TextStyle(
             fontSize: AppFontSize.md,
@@ -214,8 +219,25 @@ class _RegisterScreenState extends State<RegisterScreen>
                   value,
                   _passwordController.text,
                 ),
+                textInputAction: TextInputAction.next,
+                onSubmitted: (_) =>
+                    FocusScope.of(context).requestFocus(_inviteCodeFocus),
+              ),
+              const SizedBox(height: 16),
+              AppTextField(
+                label: 'Kode Undangan',
+                hint: 'Punya kode dari pemilik workspace?',
+                controller: _inviteCodeController,
+                focusNode: _inviteCodeFocus,
+                isRequired: false,
+                showRequiredMark: false,
                 textInputAction: TextInputAction.done,
                 onSubmitted: (_) => _handleRegister(),
+              ),
+              const SizedBox(height: 4),
+              const Text(
+                'Kosongkan kalau kamu mau daftar sebagai pemilik workspace baru. Isi kalau diajak gabung ke workspace orang lain.',
+                style: AppTextStyle.bodySm,
               ),
               const SizedBox(height: 24),
               // Cuma rebuild saat status loading berubah, bukan tiap emit AuthState.

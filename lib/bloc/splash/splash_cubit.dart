@@ -71,13 +71,20 @@ class SplashCubit extends Cubit<SplashState> {
         emit(SplashState.loading(message: message, progress: progress * 0.5));
       });
 
-      final isLoggedIn = AuthService.currentUser != null;
-      if (isLoggedIn) {
+      final wasLoggedIn = AuthService.currentUser != null;
+      if (wasLoggedIn) {
         emit(SplashState.loading(message: 'Memuat profil...', progress: 0.5));
         await loadProfile();
         emit(SplashState.loading(message: 'Aplikasi siap!', progress: 0.9));
       }
 
+      // Cek ulang SETELAH loadProfile, bukan cuma pakai `wasLoggedIn` di
+      // atas — AuthCubit.loadCurrentProfile bisa sign-out paksa di tengah
+      // jalan (mis. akun sudah dikeluarkan owner dari workspace, lihat
+      // AuthCubit._rejectMissingProfile), dan kalau itu terjadi splash
+      // harus tetap arahkan ke LoginScreen, bukan HomeScreen dengan user
+      // null (bakal crash di beberapa layar yang pakai `.user!`).
+      final isLoggedIn = AuthService.currentUser != null;
       AppLog.i(tag, 'initialize: done, isLoggedIn=$isLoggedIn');
       emit(
         SplashState.done(

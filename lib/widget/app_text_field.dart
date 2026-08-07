@@ -132,7 +132,7 @@ class _AppTextFieldState extends State<AppTextField> {
             hintStyle: const TextStyle(
               color: AppColors.textHint,
               fontWeight: AppFontWeight.regular,
-              fontSize: AppFontSize.md,
+              fontSize: AppFontSize.sm,
             ),
             filled: true,
             fillColor: widget.enabled ? AppColors.surface : AppColors.background,

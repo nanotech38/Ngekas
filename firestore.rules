@@ -28,9 +28,36 @@ service cloud.firestore {
       return myProfile().role == 'owner';
     }
 
-    // Profil user sendiri: hanya boleh dibaca/ditulis oleh uid yang sama.
+    // Profil user: dibaca oleh uid yang sama ATAU owner workspace-nya
+    // (buat layar "Kelola Orang" — owner perlu lihat daftar staff-nya).
+    // create/update dibatasi ke uid yang sama (tiap orang cuma bisa nulis
+    // profil sendiri). delete dibolehkan buat owner workspace-nya (owner
+    // "mengeluarkan" orang) — otomatis termasuk owner hapus profil sendiri
+    // (ownerId == uid dia sendiri), tapi tidak ada tombol buat itu di UI.
     match /users/{uid} {
-      allow read, write: if isSignedIn() && request.auth.uid == uid;
+      allow read: if isSignedIn() && (request.auth.uid == uid || resource.data.ownerId == request.auth.uid);
+      allow create, update: if isSignedIn() && request.auth.uid == uid;
+      allow delete: if isSignedIn() && resource.data.ownerId == request.auth.uid;
+    }
+
+    // Kode undangan — penanda publik (readable siapa saja yang login) buat
+    // validasi "kode undangan" saat daftar sebagai staff, tanpa perlu owner
+    // expose seluruh isi /users/{uid} miliknya ke calon staff yang belum
+    // jadi anggota workspace-nya. Isinya cuma penanda "uid ini valid owner",
+    // dibuat sekali otomatis lewat createOwnerProfile, tidak pernah diubah.
+    match /owner_codes/{ownerId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && request.auth.uid == ownerId;
+      allow update, delete: if false;
+    }
+
+    // Kotak masukan "Beri Feedback" di ProfileScreen — bukan data bisnis
+    // satu workspace, jadi di luar /workspaces. Sengaja cuma create: belum
+    // ada UI admin buat baca balik lewat app, dicek langsung dari Firebase
+    // Console, dan sekali terkirim tidak boleh diubah/dihapus oleh siapa pun.
+    match /app_feedback/{feedbackId} {
+      allow create: if isSignedIn();
+      allow read, update, delete: if false;
     }
 
     match /workspaces/{ownerId} {

@@ -9,6 +9,7 @@ import 'package:ngekas/logic/report_logic.dart';
 import 'package:ngekas/models/app_user.dart';
 import 'package:ngekas/models/category_model.dart';
 import 'package:ngekas/models/transaction_model.dart';
+import 'package:ngekas/template/base_template.dart';
 import 'package:ngekas/widget/app_button.dart';
 import 'package:ngekas/widget/app_dialog.dart';
 import 'package:ngekas/widget/app_toast.dart';
@@ -40,7 +41,7 @@ class ReportView extends StatelessWidget {
           AppDialog.showError(context, title: 'Gagal', message: state.errorMessage);
         }
       },
-      child: Scaffold(
+      child: BaseTemplate(
         backgroundColor: AppColors.background,
         appBar: AppBar(
           title: Text(_isIncome ? 'Laporan Pemasukan' : 'Laporan Pengeluaran'),
@@ -59,7 +60,7 @@ class ReportView extends StatelessWidget {
             ),
           ],
         ),
-        body: BlocBuilder<TransactionCubit, TransactionState>(
+        child: BlocBuilder<TransactionCubit, TransactionState>(
           builder: (context, state) {
             if (state.status == TransactionStatus.loading && state.all.isEmpty) {
               return const Center(child: CircularProgressIndicator());

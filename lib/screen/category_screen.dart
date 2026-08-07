@@ -5,6 +5,7 @@ import 'package:ngekas/bloc/category/category_cubit.dart';
 import 'package:ngekas/const/app_theme_const.dart';
 import 'package:ngekas/models/app_user.dart';
 import 'package:ngekas/models/category_model.dart';
+import 'package:ngekas/template/base_template.dart';
 import 'package:ngekas/widget/app_bottom_sheet.dart';
 import 'package:ngekas/widget/app_button.dart';
 import 'package:ngekas/widget/app_dialog.dart';
@@ -87,7 +88,7 @@ class _CategoryViewState extends State<_CategoryView> with SingleTickerProviderS
           AppDialog.showError(context, title: 'Gagal', message: state.errorMessage);
         }
       },
-      child: Scaffold(
+      child: BaseTemplate(
         backgroundColor: AppColors.background,
         appBar: AppBar(
           title: const Text('Kelola Kategori'),
@@ -103,7 +104,13 @@ class _CategoryViewState extends State<_CategoryView> with SingleTickerProviderS
             ],
           ),
         ),
-        body: BlocBuilder<CategoryCubit, CategoryState>(
+        floatingActionButton: FloatingActionButton(
+          heroTag: 'category_add_fab',
+          onPressed: () => _openForm(context),
+          backgroundColor: AppColors.primaryLight,
+          child: const Icon(Icons.add_rounded),
+        ),
+        child: BlocBuilder<CategoryCubit, CategoryState>(
           builder: (context, state) {
             if (state.status == CategoryStatus.loading && state.categories.isEmpty) {
               return const Center(child: CircularProgressIndicator());
@@ -116,11 +123,6 @@ class _CategoryViewState extends State<_CategoryView> with SingleTickerProviderS
               ],
             );
           },
-        ),
-        floatingActionButton: FloatingActionButton(
-          onPressed: () => _openForm(context),
-          backgroundColor: AppColors.primaryLight,
-          child: const Icon(Icons.add_rounded),
         ),
       ),
     );
@@ -280,7 +282,7 @@ class _CategoryFormSheetState extends State<_CategoryFormSheet> {
             const SizedBox(height: 20),
             AppTextField(
               label: 'Nama Kategori',
-              hint: 'Contoh: Penjualan, Belanja Stok',
+              hint: 'Contoh: Gaji, Belanja Bahan',
               controller: _nameController,
               isRequired: true,
               validator: (value) => (value == null || value.trim().isEmpty) ? 'Nama kategori wajib diisi' : null,
