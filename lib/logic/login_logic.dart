@@ -7,8 +7,8 @@ import 'package:ngekas/const/app_log_const.dart';
 //
 // Menampung proses (bukan tampilan) dari LoginScreen: apa yang terjadi saat
 // tombol "Masuk" ditekan. Tidak menyimpan state apa pun, jadi cukup dipanggil
-// lewat method statis (LoginLogic.handleLogin(...)) tanpa perlu instance.
-// Proses & state Firebase sesungguhnya (loading/sukses/error) ada di AuthCubit.
+// lewat method statis tanpa perlu instance. State login sesungguhnya
+// (loading/sukses/error) ada di AuthCubit.
 
 class LoginLogic {
   LoginLogic._();
@@ -18,7 +18,7 @@ class LoginLogic {
   static void handleLogin({
     required BuildContext context,
     required GlobalKey<FormState> formKey,
-    required String email,
+    required String username,
     required String password,
   }) {
     FocusScope.of(context).unfocus();
@@ -29,6 +29,6 @@ class LoginLogic {
     }
 
     AppLog.i(tag, 'handleLogin: form valid');
-    context.read<AuthCubit>().login(email: email, password: password);
+    context.read<AuthCubit>().login(username: username, password: password);
   }
 }

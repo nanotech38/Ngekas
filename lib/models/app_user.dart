@@ -1,41 +1,32 @@
 // ─── AppUser ────────────────────────────────────────────────────────────────
 //
-// Profil user dari Firestore (/users/{uid}) — beda dengan FirebaseAuth's
-// User yang cuma punya info akun (email, uid). AppUser nambahin konsep
-// workspace: role (owner/staff) dan ownerId (workspace mana yang diakses).
-// Untuk owner, ownerId == uid milik sendiri.
+// Profil user yang sedang login. Data akun (termasuk password) disimpan di
+// DatabaseService (in-memory, hardcode) — AppUser sendiri sengaja tidak
+// membawa password supaya aman dioper ke layar mana pun.
+//
+// Dua role:
+// - admin -> akses penuh (barang, kategori, stok masuk, hapus transaksi,
+//   kelola pengguna).
+// - kasir -> fokus ke transaksi penjualan (Kasir) & melihat stok.
 
-enum UserRole { owner, staff }
+enum UserRole { admin, kasir }
+
+extension UserRoleLabel on UserRole {
+  String get label => this == UserRole.admin ? 'Admin' : 'Kasir';
+}
 
 class AppUser {
   final String uid;
-  final String email;
+  final String username;
+  final String name;
   final UserRole role;
-  final String ownerId;
 
   const AppUser({
     required this.uid,
-    required this.email,
+    required this.username,
+    required this.name,
     required this.role,
-    required this.ownerId,
   });
 
-  factory AppUser.fromMap(String uid, Map<String, dynamic> map) {
-    return AppUser(
-      uid: uid,
-      email: map['email'] as String? ?? '',
-      role: (map['role'] as String?) == 'staff'
-          ? UserRole.staff
-          : UserRole.owner,
-      ownerId: map['ownerId'] as String? ?? uid,
-    );
-  }
-
-  Map<String, dynamic> toMap() {
-    return {
-      'email': email,
-      'role': role == UserRole.owner ? 'owner' : 'staff',
-      'ownerId': ownerId,
-    };
-  }
+  bool get isAdmin => role == UserRole.admin;
 }

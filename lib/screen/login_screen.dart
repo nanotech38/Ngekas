@@ -5,7 +5,6 @@ import 'package:ngekas/const/app_theme_const.dart';
 import 'package:ngekas/const/app_validator_const.dart';
 import 'package:ngekas/logic/login_logic.dart';
 import 'package:ngekas/screen/home_screen.dart';
-import 'package:ngekas/screen/register_screen.dart';
 import 'package:ngekas/services/navigation_services.dart';
 import 'package:ngekas/template/base_template.dart';
 import 'package:ngekas/widget/app_button.dart';
@@ -22,9 +21,9 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen>
     with SingleTickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
-  final _emailController = TextEditingController();
+  final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
-  final _emailFocus = FocusNode();
+  final _usernameFocus = FocusNode();
   final _passwordFocus = FocusNode();
 
   late final AnimationController _animController;
@@ -54,9 +53,9 @@ class _LoginScreenState extends State<LoginScreen>
   @override
   void dispose() {
     _animController.dispose();
-    _emailController.dispose();
+    _usernameController.dispose();
     _passwordController.dispose();
-    _emailFocus.dispose();
+    _usernameFocus.dispose();
     _passwordFocus.dispose();
     super.dispose();
   }
@@ -65,9 +64,17 @@ class _LoginScreenState extends State<LoginScreen>
     LoginLogic.handleLogin(
       context: context,
       formKey: _formKey,
-      email: _emailController.text.trim(),
+      username: _usernameController.text.trim(),
       password: _passwordController.text,
     );
+  }
+
+  // Isi otomatis form dengan akun demo (tap di kotak info akun demo).
+  void _fillDemoAccount(String username) {
+    setState(() {
+      _usernameController.text = username;
+      _passwordController.text = 'admin123';
+    });
   }
 
   @override
@@ -124,7 +131,7 @@ class _LoginScreenState extends State<LoginScreen>
         ),
         const SizedBox(height: 4),
         Text(
-          'Masuk untuk mulai mencatat pemasukan & pengeluaranmu',
+          'Masuk untuk mulai berjualan & kelola stok barang',
           textAlign: TextAlign.center,
           style: TextStyle(
             fontSize: AppFontSize.md,
@@ -133,6 +140,69 @@ class _LoginScreenState extends State<LoginScreen>
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildDemoAccountInfo() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppColors.primaryContainer,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.info_outline_rounded, size: 16, color: AppColors.primaryDark),
+              const SizedBox(width: 6),
+              Text(
+                'Akun demo · kata sandi admin123',
+                style: AppTextStyle.labelMd.copyWith(color: AppColors.primaryDark),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Expanded(child: _buildDemoChip('admin', 'Admin', Icons.admin_panel_settings_outlined)),
+              const SizedBox(width: 8),
+              Expanded(child: _buildDemoChip('kasir', 'Kasir', Icons.point_of_sale_rounded)),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDemoChip(String username, String label, IconData icon) {
+    return Material(
+      color: AppColors.surface,
+      borderRadius: BorderRadius.circular(10),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(10),
+        onTap: () => _fillDemoAccount(username),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+          child: Row(
+            children: [
+              Icon(icon, size: 18, color: AppColors.primary),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(label, style: AppTextStyle.labelMd),
+                    Text(username, style: AppTextStyle.labelSm.copyWith(color: AppColors.textMuted)),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
@@ -156,16 +226,18 @@ class _LoginScreenState extends State<LoginScreen>
                 'Silakan masuk dengan akun yang sudah terdaftar',
                 style: AppTextStyle.bodySm,
               ),
-              const SizedBox(height: 28),
+              const SizedBox(height: 16),
+              _buildDemoAccountInfo(),
+              const SizedBox(height: 20),
               AppTextField(
-                label: 'Email',
-                hint: 'Masukan Email',
-                type: FieldType.email,
-                controller: _emailController,
-                focusNode: _emailFocus,
+                label: 'Username',
+                hint: 'Masukkan username',
+                prefixIcon: Icons.person_outline_rounded,
+                controller: _usernameController,
+                focusNode: _usernameFocus,
                 isRequired: true,
                 showRequiredMark: false,
-                validator: AppValidator.email,
+                validator: AppValidator.username,
                 textInputAction: TextInputAction.next,
                 onSubmitted: (_) =>
                     FocusScope.of(context).requestFocus(_passwordFocus),
@@ -183,29 +255,7 @@ class _LoginScreenState extends State<LoginScreen>
                 textInputAction: TextInputAction.done,
                 onSubmitted: (_) => _handleLogin(),
               ),
-              const SizedBox(height: 8),
-              Align(
-                alignment: Alignment.centerRight,
-                child: TextButton(
-                  onPressed: () {
-                    // TODO: arahkan ke halaman lupa kata sandi
-                  },
-                  style: TextButton.styleFrom(
-                    padding: EdgeInsets.zero,
-                    minimumSize: Size.zero,
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  ),
-                  child: const Text(
-                    'Lupa Kata Sandi?',
-                    style: TextStyle(
-                      fontSize: AppFontSize.sm,
-                      fontWeight: AppFontWeight.semiBold,
-                      color: AppColors.primary,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 28),
               BlocSelector<AuthCubit, AuthState, bool>(
                 selector: (state) => state.status == AuthStatus.loading,
                 builder: (context, isLoading) {
@@ -215,41 +265,6 @@ class _LoginScreenState extends State<LoginScreen>
                     onPressed: _handleLogin,
                   );
                 },
-              ),
-              const SizedBox(height: 24),
-              Row(
-                children: [
-                  const Expanded(child: Divider(color: AppColors.divider)),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    child: Text('atau', style: AppTextStyle.bodySm),
-                  ),
-                  const Expanded(child: Divider(color: AppColors.divider)),
-                ],
-              ),
-              const SizedBox(height: 20),
-              Center(
-                child: Wrap(
-                  alignment: WrapAlignment.center,
-                  children: [
-                    const Text(
-                      'Belum punya akun? ',
-                      style: AppTextStyle.bodyMd,
-                    ),
-                    GestureDetector(
-                      onTap: () =>
-                          NavigationService.get().push(const RegisterScreen()),
-                      child: const Text(
-                        'Daftar Sekarang',
-                        style: TextStyle(
-                          fontSize: AppFontSize.md,
-                          fontWeight: AppFontWeight.bold,
-                          color: AppColors.primary,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
               ),
             ],
           ),

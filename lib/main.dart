@@ -1,16 +1,18 @@
-import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:ngekas/bloc/auth/auth_cubit.dart';
+import 'package:ngekas/bloc/cashier/cashier_cubit.dart';
 import 'package:ngekas/bloc/splash/splash_cubit.dart';
+import 'package:ngekas/const/app_theme_const.dart';
 import 'package:ngekas/screen/splash_screen.dart';
 import 'package:ngekas/services/navigation_services.dart';
 
-void main() async {
+// Firebase sengaja belum dipakai — semua data hardcode di memori
+// (lihat DatabaseService) dan reset tiap aplikasi dibuka ulang.
+void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
@@ -25,26 +27,29 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider<AuthCubit>(
-      create: (_) => AuthCubit(),
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider<AuthCubit>(create: (_) => AuthCubit()),
+        BlocProvider<CashierCubit>(create: (_) => CashierCubit()),
+      ],
       child: MaterialApp(
-        title: 'Ngekas',
+        title: 'Ngekas POS',
         debugShowCheckedModeBanner: false,
         navigatorKey: NavigationService.get().navigatorKey,
         theme: ThemeData(
           useMaterial3: false,
           colorScheme: ColorScheme.fromSeed(
-            seedColor: const Color(0xFF0F766E),
-            primary: const Color(0xFF0F766E),
+            seedColor: AppColors.primary,
+            primary: AppColors.primary,
             onPrimary: Colors.white,
-            primaryContainer: const Color(0xFFCCFBF1),
-            secondary: const Color(0xFFF59E0B),
+            primaryContainer: AppColors.primaryContainer,
+            secondary: AppColors.secondary,
             onSecondary: Colors.white,
-            secondaryContainer: const Color(0xFFFEF3C7),
-            surface: const Color(0xFFF8FAFC),
-            error: const Color(0xFFEF4444),
+            secondaryContainer: AppColors.secondaryContainer,
+            surface: AppColors.surface,
+            error: AppColors.error,
           ),
-          scaffoldBackgroundColor: const Color(0xFFF8FAFC),
+          scaffoldBackgroundColor: AppColors.background,
           fontFamily: GoogleFonts.montserrat().fontFamily,
           textTheme: GoogleFonts.montserratTextTheme(
             const TextTheme(
@@ -109,13 +114,13 @@ class MyApp extends StatelessWidget {
             elevation: 0,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16),
-              side: const BorderSide(color: Color(0xFFE2E8F0), width: 1),
+              side: const BorderSide(color: AppColors.border, width: 1),
             ),
             margin: EdgeInsets.zero,
           ),
           elevatedButtonTheme: ElevatedButtonThemeData(
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF0F766E),
+              backgroundColor: AppColors.primary,
               foregroundColor: Colors.white,
               elevation: 0,
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
@@ -130,8 +135,8 @@ class MyApp extends StatelessWidget {
           ),
           outlinedButtonTheme: OutlinedButtonThemeData(
             style: OutlinedButton.styleFrom(
-              foregroundColor: const Color(0xFF0F766E),
-              side: const BorderSide(color: Color(0xFF0F766E), width: 1.5),
+              foregroundColor: AppColors.primary,
+              side: const BorderSide(color: AppColors.primary, width: 1.5),
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
@@ -148,20 +153,20 @@ class MyApp extends StatelessWidget {
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: const BorderSide(
-                color: Color(0xFFE2E8F0),
+                color: AppColors.border,
                 width: 1.5,
               ),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: const BorderSide(
-                color: Color(0xFFE2E8F0),
+                color: AppColors.border,
                 width: 1.5,
               ),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Color(0xFF0F766E), width: 2),
+              borderSide: const BorderSide(color: AppColors.primary, width: 2),
             ),
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 16,
@@ -169,13 +174,13 @@ class MyApp extends StatelessWidget {
             ),
           ),
           dividerTheme: const DividerThemeData(
-            color: Color(0xFFE2E8F0),
+            color: AppColors.divider,
             thickness: 1,
             space: 0,
           ),
           bottomNavigationBarTheme: const BottomNavigationBarThemeData(
             backgroundColor: Colors.white,
-            selectedItemColor: Color(0xFF0F766E),
+            selectedItemColor: AppColors.primary,
             unselectedItemColor: Color(0xFF94A3B8),
             elevation: 0,
             type: BottomNavigationBarType.fixed,

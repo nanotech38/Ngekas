@@ -5,23 +5,24 @@ import 'package:flutter/material.dart';
 class AppColors {
   AppColors._();
 
-  // Primary — Teal
-  static const Color primary = Color(0xFF0F766E);
-  static const Color primaryLight = Color(0xFF14B8A6);
-  static const Color primaryContainer = Color(0xFFCCFBF1);
+  // Primary — Orange
+  static const Color primary = Color(0xFFEA580C);
+  static const Color primaryDark = Color(0xFFC2410C);
+  static const Color primaryLight = Color(0xFFFB923C);
+  static const Color primaryContainer = Color(0xFFFFEDD5);
 
-  // Secondary — Amber
-  static const Color secondary = Color(0xFFF59E0B);
-  static const Color secondaryLight = Color(0xFFFBBF24);
-  static const Color secondaryContainer = Color(0xFFFEF3C7);
+  // Secondary — Charcoal (kontras netral untuk orange)
+  static const Color secondary = Color(0xFF1E293B);
+  static const Color secondaryLight = Color(0xFF475569);
+  static const Color secondaryContainer = Color(0xFFE2E8F0);
 
   // Background & Surface
-  static const Color background = Color(0xFFF8FAFC);
+  static const Color background = Color(0xFFFFFAF5);
   static const Color surface = Color(0xFFFFFFFF);
-  static const Color surfaceVariant = Color(0xFFF1F5F9);
+  static const Color surfaceVariant = Color(0xFFFFF4EB);
 
   // Border
-  static const Color border = Color(0xFFE2E8F0);
+  static const Color border = Color(0xFFF1E6DC);
   static const Color borderFocus = primary;
 
   // Text
@@ -51,7 +52,7 @@ class AppColors {
   static const Color white = Color(0xFFFFFFFF);
   static const Color black = Color(0xFF000000);
   static const Color transparent = Colors.transparent;
-  static const Color divider = Color(0xFFE2E8F0);
+  static const Color divider = Color(0xFFF1E6DC);
   static const Color overlay = Color(0x80000000);
 }
 

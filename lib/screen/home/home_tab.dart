@@ -6,138 +6,153 @@ import 'package:ngekas/const/app_date_const.dart';
 import 'package:ngekas/const/app_theme_const.dart';
 import 'package:ngekas/logic/home_logic.dart';
 import 'package:ngekas/models/app_user.dart';
-import 'package:ngekas/models/category_model.dart';
+import 'package:ngekas/models/sales_report.dart';
 import 'package:ngekas/models/transaction_model.dart';
 import 'package:ngekas/screen/activity_log_screen.dart';
-import 'package:ngekas/screen/home/add_transaction_sheet.dart';
+import 'package:ngekas/screen/report/invoice_card.dart';
+import 'package:ngekas/services/database_service.dart';
 import 'package:ngekas/services/navigation_services.dart';
 import 'package:ngekas/services/transaction_service.dart';
 import 'package:ngekas/template/base_template.dart';
-import 'package:ngekas/widget/app_bottom_sheet.dart';
 
-typedef _DailyTotal = ({DateTime day, int income, int expense});
+enum _SalesPeriod { today, month }
+
+extension on _SalesPeriod {
+  String get label => this == _SalesPeriod.today ? 'Harian' : 'Bulanan';
+
+  // Tanggal pasti periode ini, mis. "12 Okt 2026" atau "Oktober 2026".
+  String rangeLabel(DateTime now) => this == _SalesPeriod.today ? AppDate.format(now) : AppDate.monthYear(now);
+}
+
+// Ringkasan penjualan satu barang dalam periode terpilih (untuk "Barang
+// Paling Laku").
+typedef _BestSeller = ({String name, String categoryName, int quantity, int revenue});
 
 // ─── HomeTab ────────────────────────────────────────────────────────────────
 //
-// Tab "Beranda" di bottom nav HomeScreen — header sapaan + saldo bulan
-// berjalan (bisa disembunyikan lewat ikon mata), tombol pintas tambah
-// pemasukan/pengeluaran, tren 7 hari terakhir, dan transaksi terbaru. Data
-// diambil langsung dari TransactionService.watch (murni tampilan, tidak ada
-// aksi yang perlu ditampung state selain toggle sembunyikan saldo).
+// Tab "Beranda" — ringkasan toko:
+// 1. Total penjualan barang (toggle Harian / Bulanan, bisa disembunyikan
+//    lewat ikon mata).
+// 2. Tombol pintas Kasir & Barang.
+// 3. Barang paling laku pada periode yang sama dengan toggle di atas.
+// 4. Transaksi terbaru (5 nota terakhir, ketuk = lihat struk).
+// Murni tampilan, data langsung dari TransactionService.watch.
+// `onOpenProducts` dipanggil tombol Barang untuk pindah ke tab Barang.
 
 class HomeTab extends StatefulWidget {
-  const HomeTab({super.key});
+  final VoidCallback? onOpenProducts;
+
+  const HomeTab({super.key, this.onOpenProducts});
 
   @override
   State<HomeTab> createState() => _HomeTabState();
 }
 
 class _HomeTabState extends State<HomeTab> {
-  bool _obscureBalance = false;
+  bool _obscureAmount = false;
+  _SalesPeriod _period = _SalesPeriod.today;
 
   @override
   Widget build(BuildContext context) {
     final user = context.watch<AuthCubit>().state.user;
-    final ownerId = user?.ownerId;
 
     return BaseTemplate(
       backgroundColor: AppColors.background,
       safeAreaBottom: false,
-      child: ownerId == null
+      safeAreaTop: false,
+      child: user == null
           ? const SizedBox.shrink()
           : SingleChildScrollView(
               padding: const EdgeInsets.only(bottom: 24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildHeader(user),
-                  StreamBuilder<List<TransactionModel>>(
-                      stream: TransactionService.watch(ownerId),
-                      builder: (context, snapshot) {
-                        if (snapshot.connectionState == ConnectionState.waiting) {
-                          return const Padding(
-                            padding: EdgeInsets.symmetric(vertical: 40),
-                            child: Center(child: CircularProgressIndicator()),
-                          );
-                        }
-                        if (snapshot.hasError) {
-                          return Padding(
-                            padding: const EdgeInsets.all(20),
-                            child: Text(
-                              'Gagal memuat ringkasan',
-                              style: AppTextStyle.bodySm.copyWith(color: AppColors.error),
-                            ),
-                          );
-                        }
-
-                        final all = snapshot.data ?? const <TransactionModel>[];
-                        final now = DateTime.now();
-                        final thisMonth = all.where((t) => t.date.year == now.year && t.date.month == now.month);
-
-                        final totalIncome = thisMonth
-                            .where((t) => t.type == CategoryType.income)
-                            .fold<int>(0, (sum, t) => sum + t.amount);
-                        final totalExpense = thisMonth
-                            .where((t) => t.type == CategoryType.expense)
-                            .fold<int>(0, (sum, t) => sum + t.amount);
-
-                        final dailyTotals = List.generate(7, (i) {
-                          final day = DateTime(now.year, now.month, now.day - (6 - i));
-                          final ofDay = all.where(
-                            (t) => t.date.year == day.year && t.date.month == day.month && t.date.day == day.day,
-                          );
-                          return (
-                            day: day,
-                            income: ofDay
-                                .where((t) => t.type == CategoryType.income)
-                                .fold<int>(0, (sum, t) => sum + t.amount),
-                            expense: ofDay
-                                .where((t) => t.type == CategoryType.expense)
-                                .fold<int>(0, (sum, t) => sum + t.amount),
-                          );
-                        });
-
-                        return Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Transform.translate(
-                              offset: const Offset(0, -28),
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 20),
-                                child: _buildBalanceCard(income: totalIncome, expense: totalExpense),
-                              ),
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  _buildActionButtons(context, ownerId),
-                                  const SizedBox(height: 24),
-                                  const Text('Tren 7 Hari Terakhir', style: AppTextStyle.titleMd),
-                                  const SizedBox(height: 12),
-                                  _buildChart(dailyTotals),
-                                  const SizedBox(height: 24),
-                                  _buildRecentSection(all),
-                                ],
-                              ),
-                            ),
-                          ],
-                        );
-                      },
-                    ),
-                  ],
-                ),
+              child: StreamBuilder<List<TransactionModel>>(
+                stream: TransactionService.watch(),
+                builder: (context, snapshot) {
+                  final all = snapshot.data ?? const <TransactionModel>[];
+                  return _buildContent(context, user, all, isLoading: !snapshot.hasData);
+                },
               ),
+            ),
     );
   }
 
-  Widget _buildHeader(AppUser? user) {
+  bool _isInPeriod(DateTime date) {
+    final now = DateTime.now();
+    if (date.year != now.year || date.month != now.month) return false;
+    return _period == _SalesPeriod.month || date.day == now.day;
+  }
+
+  List<_BestSeller> _bestSellers(Iterable<TransactionModel> sales) {
+    final byProduct = <String, _BestSeller>{};
+    for (final t in sales) {
+      final current = byProduct[t.productId];
+      byProduct[t.productId] = (
+        name: t.itemName,
+        categoryName: t.categoryName,
+        quantity: (current?.quantity ?? 0) + t.quantity,
+        revenue: (current?.revenue ?? 0) + t.amount,
+      );
+    }
+    return byProduct.values.toList()
+      ..sort((a, b) {
+        final byQuantity = b.quantity.compareTo(a.quantity);
+        return byQuantity != 0 ? byQuantity : b.revenue.compareTo(a.revenue);
+      });
+  }
+
+  Widget _buildContent(
+    BuildContext context,
+    AppUser user,
+    List<TransactionModel> all, {
+    required bool isLoading,
+  }) {
+    final sales = all.where((t) => t.type == TransactionType.sale && _isInPeriod(t.date)).toList();
+    final totalRevenue = sales.fold<int>(0, (sum, t) => sum + t.amount);
+    final totalQuantity = sales.fold<int>(0, (sum, t) => sum + t.quantity);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildHeader(user),
+        Transform.translate(
+          offset: const Offset(0, -28),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: _buildSalesCard(revenue: totalRevenue, quantity: totalQuantity, transactionCount: {for (final t in sales) t.invoiceKey}.length),
+          ),
+        ),
+        if (isLoading)
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 40),
+            child: Center(child: CircularProgressIndicator()),
+          )
+        else
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildActionButtons(),
+                const SizedBox(height: 24),
+                _buildBestSellerSection(_bestSellers(sales)),
+                const SizedBox(height: 24),
+                _buildRecentSection(context, all),
+              ],
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildHeader(AppUser user) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(20, 8, 20, 44),
+      padding: EdgeInsets.fromLTRB(20, MediaQuery.of(context).padding.top + 16, 20, 44),
       decoration: const BoxDecoration(
-        color: AppColors.primary,
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [AppColors.primaryDark, AppColors.primary],
+        ),
         borderRadius: BorderRadius.only(bottomLeft: Radius.circular(28), bottomRight: Radius.circular(28)),
       ),
       child: Row(
@@ -147,28 +162,39 @@ class _HomeTabState extends State<HomeTab> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const SizedBox(height: 24.0),
-                Text(
-                  'Selamat datang kembali',
-                  style: AppTextStyle.bodySm.copyWith(color: Colors.white.withValues(alpha: 0.75)),
+                Row(
+                  children: [
+                    Icon(Icons.storefront_rounded, size: 14, color: Colors.white.withValues(alpha: 0.85)),
+                    const SizedBox(width: 6),
+                    Text(
+                      DatabaseService.storeName,
+                      style: AppTextStyle.labelMd.copyWith(color: Colors.white.withValues(alpha: 0.85)),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 10),
                 Text(
-                  user?.email ?? '-',
+                  'Halo, ${user.name}',
                   style: AppTextStyle.titleLg.copyWith(color: Colors.white),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 6),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(user.role.label, style: AppTextStyle.labelSm.copyWith(color: Colors.white)),
                 ),
               ],
             ),
           ),
           const SizedBox(width: 12),
-          Padding(
-            padding: const EdgeInsets.only(top: 24.0),
-            child: _buildIconButton(
-              icon: Icons.history_rounded,
-              onTap: () => NavigationService.get().push(const ActivityLogScreen()),
-            ),
+          _buildIconButton(
+            icon: Icons.history_rounded,
+            onTap: () => NavigationService.get().push(const ActivityLogScreen()),
           ),
         ],
       ),
@@ -182,19 +208,12 @@ class _HomeTabState extends State<HomeTab> {
       child: InkWell(
         customBorder: const CircleBorder(),
         onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.all(10),
-          child: Icon(icon, color: Colors.white, size: 20),
-        ),
+        child: Padding(padding: const EdgeInsets.all(10), child: Icon(icon, color: Colors.white, size: 20)),
       ),
     );
   }
 
-  Widget _buildBalanceCard({required int income, required int expense}) {
-    final balance = income - expense;
-    final balanceColor = balance < 0 ? AppColors.error : AppColors.textPrimary;
-    final balanceText = _obscureBalance ? '••••••••' : '${balance < 0 ? '-' : ''}${AppCurrency.format(balance)}';
-
+  Widget _buildSalesCard({required int revenue, required int quantity, required int transactionCount}) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(18),
@@ -208,15 +227,15 @@ class _HomeTabState extends State<HomeTab> {
         children: [
           Row(
             children: [
-              const Text('Saldo Bulan Ini', style: AppTextStyle.bodySm),
-              const Spacer(),
+              Expanded(child: _buildPeriodToggle()),
+              const SizedBox(width: 8),
               InkWell(
                 borderRadius: BorderRadius.circular(20),
-                onTap: () => setState(() => _obscureBalance = !_obscureBalance),
+                onTap: () => setState(() => _obscureAmount = !_obscureAmount),
                 child: Padding(
                   padding: const EdgeInsets.all(4),
                   child: Icon(
-                    _obscureBalance ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                    _obscureAmount ? Icons.visibility_off_outlined : Icons.visibility_outlined,
                     size: 18,
                     color: AppColors.textDisabled,
                   ),
@@ -224,28 +243,33 @@ class _HomeTabState extends State<HomeTab> {
               ),
             ],
           ),
-          const SizedBox(height: 4),
-          Text(balanceText, style: AppTextStyle.h3.copyWith(color: balanceColor)),
           const SizedBox(height: 16),
+          Text('Total Penjualan · ${_period.rangeLabel(DateTime.now())}', style: AppTextStyle.bodySm),
+          const SizedBox(height: 4),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(
+              _obscureAmount ? '••••••••' : AppCurrency.format(revenue),
+              style: AppTextStyle.h3.copyWith(color: AppColors.textPrimary),
+            ),
+          ),
+          const SizedBox(height: 14),
           Row(
             children: [
               Expanded(
-                child: _buildPill(
-                  label: 'Pemasukan',
-                  amount: income,
-                  color: AppColors.income,
-                  background: AppColors.incomeBackground,
-                  icon: Icons.arrow_downward_rounded,
+                child: _buildStat(
+                  icon: Icons.shopping_bag_outlined,
+                  label: 'Barang Terjual',
+                  value: '$quantity item',
                 ),
               ),
               const SizedBox(width: 10),
               Expanded(
-                child: _buildPill(
-                  label: 'Pengeluaran',
-                  amount: expense,
-                  color: AppColors.expense,
-                  background: AppColors.expenseBackground,
-                  icon: Icons.arrow_upward_rounded,
+                child: _buildStat(
+                  icon: Icons.receipt_long_outlined,
+                  label: 'Nota',
+                  value: '$transactionCount',
                 ),
               ),
             ],
@@ -255,207 +279,227 @@ class _HomeTabState extends State<HomeTab> {
     );
   }
 
-  Widget _buildPill({
-    required String label,
-    required int amount,
-    required Color color,
-    required Color background,
-    required IconData icon,
-  }) {
+  Widget _buildPeriodToggle() {
+    return Container(
+      padding: const EdgeInsets.all(3),
+      decoration: BoxDecoration(color: AppColors.surfaceVariant, borderRadius: BorderRadius.circular(10)),
+      child: Row(
+        children: _SalesPeriod.values.map((period) {
+          final selected = _period == period;
+          return Expanded(
+            child: GestureDetector(
+              onTap: () => setState(() => _period = period),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 150),
+                padding: const EdgeInsets.symmetric(vertical: 7),
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: selected ? AppColors.primary : Colors.transparent,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  period.label,
+                  style: AppTextStyle.labelMd.copyWith(color: selected ? Colors.white : AppColors.textMuted),
+                ),
+              ),
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+
+  Widget _buildStat({required IconData icon, required String label, required String value}) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-      decoration: BoxDecoration(color: background, borderRadius: BorderRadius.circular(10)),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      decoration: BoxDecoration(color: AppColors.incomeBackground, borderRadius: BorderRadius.circular(10)),
+      child: Row(
         children: [
-          Row(
-            children: [
-              Icon(icon, size: 12, color: color),
-              const SizedBox(width: 4),
-              Text(label, style: AppTextStyle.labelSm.copyWith(color: color)),
-            ],
-          ),
-          const SizedBox(height: 4),
-          Text(
-            _obscureBalance ? '••••••' : AppCurrency.format(amount),
-            style: AppTextStyle.labelLg.copyWith(color: color),
-            overflow: TextOverflow.ellipsis,
+          Icon(icon, size: 16, color: AppColors.income),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(label, style: AppTextStyle.labelSm.copyWith(color: AppColors.income), overflow: TextOverflow.ellipsis),
+                Text(
+                  _obscureAmount ? '••' : value,
+                  style: AppTextStyle.labelLg.copyWith(color: AppColors.income),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildActionButtons(BuildContext context, String ownerId) {
+  Widget _buildActionButtons() {
     return Row(
       children: [
         Expanded(
           child: _buildActionButton(
-            label: '+ Pemasukan',
-            color: AppColors.income,
-            onTap: () => _openAddSheet(context, ownerId, CategoryType.income),
+            label: 'Kasir',
+            icon: Icons.point_of_sale_rounded,
+            color: AppColors.primary,
+            onTap: HomeLogic.openCashier,
           ),
         ),
         const SizedBox(width: 12),
         Expanded(
           child: _buildActionButton(
-            label: '+ Pengeluaran',
-            color: AppColors.expense,
-            onTap: () => _openAddSheet(context, ownerId, CategoryType.expense),
+            label: 'Gudang',
+            icon: Icons.warehouse_rounded,
+            color: AppColors.secondary,
+            onTap: () => widget.onOpenProducts?.call(),
           ),
         ),
       ],
     );
   }
 
-  void _openAddSheet(BuildContext context, String ownerId, CategoryType type) {
-    AppBottomSheet.show(
-      context,
-      builder: (_) => AddTransactionSheet(ownerId: ownerId, initialType: type),
-    );
-  }
-
-  Widget _buildActionButton({required String label, required Color color, required VoidCallback onTap}) {
+  Widget _buildActionButton({
+    required String label,
+    required IconData icon,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
     return SizedBox(
       height: 48,
-      child: ElevatedButton(
+      child: ElevatedButton.icon(
         onPressed: onTap,
+        icon: Icon(icon, size: 18),
+        label: Text(label, style: AppTextStyle.labelLg.copyWith(color: Colors.white)),
         style: ElevatedButton.styleFrom(
           backgroundColor: color,
           foregroundColor: Colors.white,
           elevation: 0,
+          padding: const EdgeInsets.symmetric(horizontal: 12),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         ),
-        child: Text(label, style: AppTextStyle.labelLg.copyWith(color: Colors.white)),
       ),
     );
   }
 
-  Widget _buildChart(List<_DailyTotal> dailyTotals) {
-    final maxValue = dailyTotals.fold<int>(0, (max, d) {
-      final dayMax = d.income > d.expense ? d.income : d.expense;
-      return dayMax > max ? dayMax : max;
-    });
-
-    if (maxValue == 0) {
-      return Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.border),
-        ),
-        child: Center(
-          child: Text('Belum ada data transaksi minggu ini.', style: AppTextStyle.bodySm, textAlign: TextAlign.center),
-        ),
-      );
-    }
-
-    const chartHeight = 110.0;
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(14, 16, 14, 10),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Column(
-        children: [
-          SizedBox(
-            height: chartHeight,
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: dailyTotals.map((d) {
-                final incomeHeight = (d.income / maxValue) * chartHeight;
-                final expenseHeight = (d.expense / maxValue) * chartHeight;
-                return Expanded(
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      _buildBar(incomeHeight, AppColors.income),
-                      const SizedBox(width: 3),
-                      _buildBar(expenseHeight, AppColors.expense),
-                    ],
-                  ),
-                );
-              }).toList(),
-            ),
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: dailyTotals
-                .map(
-                  (d) => Expanded(
-                    child: Text(
-                      AppDate.weekdayShort(d.day),
-                      textAlign: TextAlign.center,
-                      style: AppTextStyle.labelSm.copyWith(color: AppColors.textDisabled),
-                    ),
-                  ),
-                )
-                .toList(),
-          ),
-          const SizedBox(height: 12),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              _buildLegend('Pemasukan', AppColors.income),
-              const SizedBox(width: 16),
-              _buildLegend('Pengeluaran', AppColors.expense),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildBar(double height, Color color) {
-    return Container(
-      width: 10,
-      height: height < 2 ? 2 : height,
-      decoration: BoxDecoration(
-        color: color,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(3)),
-      ),
-    );
-  }
-
-  Widget _buildLegend(String label, Color color) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          width: 8,
-          height: 8,
-          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-        ),
-        const SizedBox(width: 6),
-        Text(label, style: AppTextStyle.labelSm.copyWith(color: AppColors.textDisabled)),
-      ],
-    );
-  }
-
-  Widget _buildRecentSection(List<TransactionModel> all) {
-    final recent = all.take(5).toList();
+  Widget _buildBestSellerSection(List<_BestSeller> bestSellers) {
+    final top = bestSellers.take(5).toList();
+    final maxQuantity = top.isEmpty ? 0 : top.first.quantity;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           children: [
-            const Text('Transaksi Terbaru', style: AppTextStyle.titleMd),
-            const Spacer(),
-            Builder(
-              builder: (context) => GestureDetector(
-                onTap: () => HomeLogic.openReportPicker(context),
-                child: const Text(
-                  'Lihat Semua',
-                  style: TextStyle(color: AppColors.primary, fontWeight: AppFontWeight.semiBold),
+            const Expanded(child: Text('Barang Paling Laku', style: AppTextStyle.titleMd)),
+            Text(_period.rangeLabel(DateTime.now()), style: AppTextStyle.labelMd.copyWith(color: AppColors.textMuted)),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Container(
+          width: double.infinity,
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: AppColors.border),
+          ),
+          child: top.isEmpty
+              ? Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Text(
+                    'Belum ada barang terjual pada ${_period.rangeLabel(DateTime.now())}.',
+                    style: AppTextStyle.bodySm,
+                    textAlign: TextAlign.center,
+                  ),
+                )
+              : Column(
+                  children: [
+                    for (final (index, item) in top.indexed) ...[
+                      if (index > 0) const Divider(height: 1, color: AppColors.divider),
+                      _buildBestSellerTile(rank: index + 1, item: item, maxQuantity: maxQuantity),
+                    ],
+                  ],
                 ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildBestSellerTile({required int rank, required _BestSeller item, required int maxQuantity}) {
+    final isTop = rank == 1;
+    return Padding(
+      padding: const EdgeInsets.all(12),
+      child: Row(
+        children: [
+          Container(
+            width: 28,
+            height: 28,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: isTop ? AppColors.primary : AppColors.primaryContainer,
+              shape: BoxShape.circle,
+            ),
+            child: Text(
+              '$rank',
+              style: AppTextStyle.labelMd.copyWith(color: isTop ? Colors.white : AppColors.primaryDark),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(item.name, style: AppTextStyle.labelLg, maxLines: 1, overflow: TextOverflow.ellipsis),
+                    ),
+                    const SizedBox(width: 8),
+                    Text('${item.quantity} terjual', style: AppTextStyle.labelMd.copyWith(color: AppColors.primaryDark)),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(4),
+                  child: LinearProgressIndicator(
+                    value: maxQuantity == 0 ? 0 : item.quantity / maxQuantity,
+                    minHeight: 6,
+                    backgroundColor: AppColors.surfaceVariant,
+                    color: AppColors.primaryLight,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '${item.categoryName} · ${_obscureAmount ? '••••' : AppCurrency.format(item.revenue)}',
+                  style: AppTextStyle.labelSm.copyWith(color: AppColors.textMuted),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // 5 nota penjualan terakhir — kartunya sama dengan Laporan Penjualan dan
+  // bisa diketuk untuk lihat struk.
+  Widget _buildRecentSection(BuildContext context, List<TransactionModel> all) {
+    final sales = all.where((t) => t.type == TransactionType.sale).toList();
+    final recent = SalesReport.build(sales, const {}).invoices.take(5).toList();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            const Expanded(child: Text('Transaksi Terbaru', style: AppTextStyle.titleMd)),
+            GestureDetector(
+              onTap: HomeLogic.openSalesReport,
+              child: const Text(
+                'Lihat Semua',
+                style: TextStyle(color: AppColors.primary, fontWeight: AppFontWeight.semiBold),
               ),
             ),
           ],
@@ -473,62 +517,12 @@ class _HomeTabState extends State<HomeTab> {
             child: const Center(child: Text('Belum ada transaksi.', style: AppTextStyle.bodySm)),
           )
         else
-          ...recent.map((t) => Padding(padding: const EdgeInsets.only(bottom: 10), child: _buildTransactionTile(t))),
+          for (final invoice in recent)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: InvoiceCard(invoice: invoice, showDate: true),
+            ),
       ],
     );
-  }
-
-  Widget _buildTransactionTile(TransactionModel t) {
-    final isIncome = t.type == CategoryType.income;
-    final color = isIncome ? AppColors.income : AppColors.expense;
-    final background = isIncome ? AppColors.incomeBackground : AppColors.expenseBackground;
-
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(color: background, shape: BoxShape.circle),
-            child: Icon(isIncome ? Icons.arrow_downward_rounded : Icons.arrow_upward_rounded, color: color, size: 18),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(t.itemName, style: AppTextStyle.labelLg, maxLines: 1, overflow: TextOverflow.ellipsis),
-                const SizedBox(height: 2),
-                Text(
-                  '${t.categoryName} · ${_relativeDate(t.date)}',
-                  style: AppTextStyle.labelSm.copyWith(color: AppColors.textDisabled),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 8),
-          Text(
-            '${isIncome ? '+' : '-'}${AppCurrency.format(t.amount)}',
-            style: AppTextStyle.labelLg.copyWith(color: color),
-          ),
-        ],
-      ),
-    );
-  }
-
-  String _relativeDate(DateTime date) {
-    final now = DateTime.now();
-    final day = DateTime(date.year, date.month, date.day);
-    final today = DateTime(now.year, now.month, now.day);
-    final diff = today.difference(day).inDays;
-    if (diff == 0) return 'Hari ini';
-    if (diff == 1) return 'Kemarin';
-    return AppDate.format(date);
   }
 }

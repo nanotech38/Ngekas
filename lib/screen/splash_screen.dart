@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:ngekas/bloc/auth/auth_cubit.dart';
 import 'package:ngekas/bloc/splash/splash_cubit.dart';
 import 'package:ngekas/const/app_rc_const.dart';
 import 'package:ngekas/const/app_theme_const.dart';
-import 'package:ngekas/screen/home_screen.dart';
 import 'package:ngekas/screen/login_screen.dart';
 import 'package:ngekas/services/navigation_services.dart';
 import 'package:ngekas/template/base_template.dart';
@@ -37,7 +35,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
 
     _logoController.forward().then((_) {
       if (mounted) {
-        context.read<SplashCubit>().initialize(loadProfile: () => context.read<AuthCubit>().loadCurrentProfile());
+        context.read<SplashCubit>().initialize();
       }
     });
   }
@@ -53,15 +51,10 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
     return BlocListener<SplashCubit, SplashState>(
       listener: (context, state) {
         if (state.rc == rcSuccess) {
-          // Profil (kalau isLoggedIn) sudah selesai dimuat di dalam
-          // SplashCubit.initialize sebelum state ini di-emit, jadi
-          // state.user di AuthCubit sudah siap saat HomeScreen tampil.
+          // Sesi login tidak disimpan antar buka-tutup aplikasi (data juga
+          // reset), jadi selalu mulai dari LoginScreen.
           Future.delayed(const Duration(milliseconds: 600), () {
-            if (state.isLoggedIn) {
-              NavigationService.get().pushAndRemoveAll(const HomeScreen());
-            } else {
-              NavigationService.get().pushAndRemoveAll(const LoginScreen());
-            }
+            NavigationService.get().pushAndRemoveAll(const LoginScreen());
           });
         }
       },
@@ -102,7 +95,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
             ),
             const SizedBox(height: 8),
             Text(
-              'Catatan Pemasukan & Pengeluaran',
+              'Kasir & Stok Barang',
               style: TextStyle(
                 fontSize: AppFontSize.md,
                 fontWeight: AppFontWeight.regular,
@@ -133,7 +126,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
 
         return Column(
           children: [
-            const Icon(Icons.error_outline_rounded, color: Color(0xFFFCA5A5), size: 32),
+            const Icon(Icons.error_outline_rounded, color: Color(0xFFFFE4E6), size: 32),
             const SizedBox(height: 16),
             Text(
               message,
@@ -141,15 +134,13 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
               style: const TextStyle(
                 fontSize: AppFontSize.sm,
                 fontWeight: AppFontWeight.medium,
-                color: Color(0xFFFCA5A5),
+                color: Color(0xFFFFE4E6),
                 letterSpacing: 0.2,
               ),
             ),
             const SizedBox(height: 16),
             GestureDetector(
-              onTap: () => context.read<SplashCubit>().initialize(
-                loadProfile: () => context.read<AuthCubit>().loadCurrentProfile(),
-              ),
+              onTap: () => context.read<SplashCubit>().initialize(),
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
                 decoration: BoxDecoration(

@@ -1,5 +1,5 @@
 name: ngekas
-description: "Aplikasi catatan pemasukan dan pengeluaran usaha"
+description: "Aplikasi kasir & pencatatan stok barang untuk toko"
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
@@ -43,31 +43,37 @@ dependencies:
   # Mempermudah perbandingan objek state (value equality) tanpa override manual.
   equatable: ^2.0.8
 
-  # Database Local — penyimpanan data transaksi pemasukan/pengeluaran di perangkat (SQLite).
-  sqflite: ^2.4.2+1
-  
-  # Utility untuk menyusun path file database secara cross-platform.
-  path: ^1.9.0
-
   # Logging terstruktur untuk debugging (menggantikan print/debugPrint biasa).
   logger: ^2.7.0
 
   # Font Montserrat untuk seluruh aplikasi, diambil dari Google Fonts.
   google_fonts: ^8.2.0
 
-  # Firebase — inisialisasi koneksi ke project Firebase (wajib sebelum pakai produk Firebase apa pun).
-  firebase_core: ^4.12.1
-
-  # Firebase Authentication — login, daftar akun, dan sesi login (stay logged in).
-  firebase_auth: ^6.5.6
-
-  # Cloud Firestore — database bersama (owner & staff beda device) untuk data bisnis.
-  cloud_firestore: ^6.7.1
-  shared_preferences: ^2.5.5
+  # Firebase, SQLite & shared_preferences sementara dinonaktifkan — semua data
+  # hardcode in-memory (lib/services/database_service.dart) dan reset tiap
+  # aplikasi ditutup. Aktifkan lagi baris di bawah saat mau balik ke Firebase.
+  # firebase_core: ^4.12.1
+  # firebase_auth: ^6.5.6
+  # cloud_firestore: ^6.7.1
+  # shared_preferences: ^2.5.5
+  # sqflite: ^2.4.2+1
+  # path: ^1.9.0
 
   # Dropdown dengan fitur search bawaan — dipakai untuk pemilihan kategori
   # saat mengisi Laporan.
   dropdown_button2: ^3.1.0
+
+  # Scan barcode pabrik (EAN-13, Code128, dll) pakai kamera saat tambah barang.
+  mobile_scanner: ^7.4.2
+
+  # Export Laporan Penjualan ke PDF (pdf = susun dokumen, printing = pratinjau,
+  # bagikan & cetak/simpan).
+  pdf: ^3.13.1
+  printing: ^5.15.1
+  share_plus: ^13.3.1
+  file_picker: ^13.1.0
+  archive: ^4.5.2
+  xml: ^7.1.0
 
 dev_dependencies:
   flutter_test:

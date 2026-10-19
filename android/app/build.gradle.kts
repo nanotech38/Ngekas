@@ -1,10 +1,10 @@
 plugins {
     id("com.android.application")
-    id("kotlin-android")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
     // Google services Gradle plugin, dibutuhkan supaya google-services.json terbaca oleh Firebase SDK.
-    id("com.google.gms.google-services")
+    // Sementara dinonaktifkan selama aplikasi belum pakai Firebase (data hardcode).
+    // id("com.google.gms.google-services")
 }
 
 android {
@@ -17,9 +17,6 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
-    kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_17.toString()
-    }
 
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
@@ -41,14 +38,18 @@ android {
     }
 }
 
+kotlin {
+    compilerOptions {
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+    }
+}
+
 flutter {
     source = "../.."
 }
 
 dependencies {
-    // Import the Firebase BoM supaya semua library Firebase pakai versi yang kompatibel.
-    implementation(platform("com.google.firebase:firebase-bom:34.16.0"))
-
-    // Firebase Analytics — default product yang disarankan Firebase console.
-    implementation("com.google.firebase:firebase-analytics")
+    // Firebase sementara dinonaktifkan (lihat catatan plugin di atas).
+    // implementation(platform("com.google.firebase:firebase-bom:34.16.0"))
+    // implementation("com.google.firebase:firebase-analytics")
 }

@@ -18,6 +18,16 @@ class AppValidator {
     return null;
   }
 
+  static String? username(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return 'Username wajib diisi';
+    }
+    if (!RegExp(r'^[a-zA-Z0-9_.]{3,20}$').hasMatch(value.trim())) {
+      return 'Username 3–20 karakter (huruf, angka, titik, garis bawah)';
+    }
+    return null;
+  }
+
   static String? password(String? value) {
     if (value == null || value.isEmpty) {
       return 'Kata sandi wajib diisi';

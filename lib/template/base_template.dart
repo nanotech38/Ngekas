@@ -10,8 +10,8 @@ import 'package:flutter/material.dart';
 // Dua mode background:
 // - `backgroundColor` diisi (mis. AppColors.background) -> halaman konten
 //   biasa (Beranda, Laporan, Kategori, Profil, dll), background solid.
-// - `backgroundColor` dibiarkan null (default) -> body pakai gradient teal
-//   full-bleed, dipakai Splash/Login/Register yang tanpa AppBar.
+// - `backgroundColor` dibiarkan null (default) -> body pakai gradient orange
+//   full-bleed, dipakai Splash/Login yang tanpa AppBar.
 
 class BaseTemplate extends StatelessWidget {
   const BaseTemplate({
@@ -23,9 +23,9 @@ class BaseTemplate extends StatelessWidget {
       begin: Alignment.topLeft,
       end: Alignment.bottomRight,
       colors: [
-        Color(0xFF134E4A),
-        Color(0xFF0F766E),
-        Color(0xFF0D9488),
+        Color(0xFFC2410C),
+        Color(0xFFEA580C),
+        Color(0xFFF97316),
       ],
       stops: [0.0, 0.5, 1.0],
     ),
@@ -51,7 +51,7 @@ class BaseTemplate extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // backgroundColor null berarti belum ada halaman konten solid yang minta
-    // -> fallback ke gradient (perilaku lama, dipakai Splash/Login/Register).
+    // -> fallback ke gradient (perilaku lama, dipakai Splash/Login).
     final useGradient = backgroundColor == null;
 
     return Scaffold(

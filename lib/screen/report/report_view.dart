@@ -1,246 +1,166 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:ngekas/bloc/auth/auth_cubit.dart';
-import 'package:ngekas/bloc/transaction/transaction_cubit.dart';
+import 'package:ngekas/bloc/sales_report/sales_report_cubit.dart';
 import 'package:ngekas/const/app_currency_const.dart';
 import 'package:ngekas/const/app_date_const.dart';
 import 'package:ngekas/const/app_theme_const.dart';
 import 'package:ngekas/logic/report_logic.dart';
-import 'package:ngekas/models/app_user.dart';
-import 'package:ngekas/models/category_model.dart';
-import 'package:ngekas/models/transaction_model.dart';
+import 'package:ngekas/models/sales_report.dart';
+import 'package:ngekas/screen/report/invoice_card.dart';
 import 'package:ngekas/template/base_template.dart';
-import 'package:ngekas/widget/app_button.dart';
-import 'package:ngekas/widget/app_dialog.dart';
-import 'package:ngekas/widget/app_toast.dart';
 
 // ─── ReportView ─────────────────────────────────────────────────────────────
 //
-// Isi utama ReportScreen (header filter + list kartu riwayat). Dipisah dari
-// ReportScreen supaya ReportScreen sendiri cuma jadi wiring BlocProvider.
+// Isi Laporan Penjualan:
+// - Periode: Harian / Bulanan (dengan panah ‹ › untuk pindah periode) atau
+//   Pilih Tanggal (rentang custom), selalu dengan label tanggal pasti.
+// - Ringkasan: omzet, jumlah nota, barang terjual, rata-rata per nota, laba
+//   kotor.
+// - Cari No. Nota / nama barang + filter kategori & kasir (AppBar).
+// - Tab "Nota" (dikelompokkan per tanggal + subtotal harian, ketuk untuk
+//   detail) & "Per Barang" (rekap jumlah & omzet).
+// - Export PDF sesuai periode & filter yang aktif (ikon PDF di AppBar).
 
-class ReportView extends StatelessWidget {
-  final CategoryType type;
-  final String ownerId;
+enum _ReportTab { invoices, products }
 
-  const ReportView({super.key, required this.type, required this.ownerId});
+class ReportView extends StatefulWidget {
+  const ReportView({super.key});
 
-  bool get _isIncome => type == CategoryType.income;
+  @override
+  State<ReportView> createState() => _ReportViewState();
+}
+
+class _ReportViewState extends State<ReportView> {
+  _ReportTab _tab = _ReportTab.invoices;
 
   @override
   Widget build(BuildContext context) {
-    final isOwner = context.read<AuthCubit>().state.user?.role == UserRole.owner;
-
-    return BlocListener<TransactionCubit, TransactionState>(
-      listener: (context, state) {
-        if (state.status == TransactionStatus.streamError) {
-          AppDialog.showError(context, title: 'Gagal Memuat', message: state.errorMessage);
-        } else if (state.status == TransactionStatus.deleteSuccess) {
-          AppToast.showSuccess(context, 'Laporan dihapus');
-        } else if (state.status == TransactionStatus.deleteError) {
-          AppDialog.showError(context, title: 'Gagal', message: state.errorMessage);
-        }
-      },
-      child: BaseTemplate(
-        backgroundColor: AppColors.background,
-        appBar: AppBar(
-          title: Text(_isIncome ? 'Laporan Pemasukan' : 'Laporan Pengeluaran'),
-          actions: [
-            BlocBuilder<TransactionCubit, TransactionState>(
-              builder: (context, state) => IconButton(
-                tooltip: 'Filter',
-                icon: Badge(
-                  isLabelVisible: state.filter.isActive,
-                  smallSize: 8,
-                  backgroundColor: AppColors.secondary,
-                  child: const Icon(Icons.filter_list_rounded),
-                ),
-                onPressed: () => ReportLogic.openFilterSheet(context),
+    return BaseTemplate(
+      backgroundColor: AppColors.background,
+      appBar: AppBar(
+        title: const Text('Laporan Penjualan'),
+        actions: [
+          BlocSelector<SalesReportCubit, SalesReportState, bool>(
+            selector: (state) => state.hasExtraFilter,
+            builder: (context, hasFilter) => IconButton(
+              tooltip: 'Filter',
+              icon: Badge(
+                isLabelVisible: hasFilter,
+                smallSize: 8,
+                backgroundColor: AppColors.primary,
+                child: const Icon(Icons.filter_list_rounded),
               ),
+              onPressed: () => ReportLogic.openFilterSheet(context),
             ),
-          ],
-        ),
-        child: BlocBuilder<TransactionCubit, TransactionState>(
-          builder: (context, state) {
-            if (state.status == TransactionStatus.loading && state.all.isEmpty) {
-              return const Center(child: CircularProgressIndicator());
-            }
+          ),
+          IconButton(
+            tooltip: 'Export PDF',
+            icon: const Icon(Icons.picture_as_pdf_outlined),
+            onPressed: () => ReportLogic.exportPdf(context),
+          ),
+        ],
+      ),
+      child: BlocBuilder<SalesReportCubit, SalesReportState>(
+        builder: (context, state) {
+          if (state.status == SalesReportStatus.loading) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          final report = state.report;
 
-            final items = state.filtered;
-
-            return Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                  child: Align(
-                    alignment: Alignment.centerLeft,
-                    child: AppButton(
-                      label: 'Tambah Laporan',
-                      fontSize: AppFontSize.sm,
-                      icon: Icons.add_rounded,
-                      height: 30,
-                      borderRadius: 8,
-                      expand: false,
-                      onPressed: () => ReportLogic.openAddEntrySheet(context),
-                    ),
-                  ),
-                ),
-                Expanded(
-                  child: items.isEmpty
-                      ? Center(
-                          child: Padding(
-                            padding: const EdgeInsets.all(24),
-                            child: Text(
-                              state.filter.isActive
-                                  ? 'Tidak ada data yang cocok dengan filter ini.'
-                                  : (_isIncome ? 'Belum ada catatan pemasukan.' : 'Belum ada catatan pengeluaran.'),
-                              style: AppTextStyle.bodyMd,
-                              textAlign: TextAlign.center,
-                            ),
-                          ),
-                        )
-                      : ListView.separated(
-                          padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                          itemCount: items.length,
-                          separatorBuilder: (_, _) => const SizedBox(height: 10),
-                          itemBuilder: (context, index) => _buildCard(context, items[index], isOwner),
-                        ),
-                ),
-                _buildSummaryCard(items),
-              ],
-            );
-          },
-        ),
+          return ListView(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
+            children: [
+              _buildPeriodSelector(context, state),
+              const SizedBox(height: 16),
+              _buildSummary(report.summary),
+              const SizedBox(height: 16),
+              _buildSearchField(context),
+              if (state.hasExtraFilter) ...[const SizedBox(height: 10), _buildActiveFilters(context, state)],
+              const SizedBox(height: 16),
+              _buildTabSwitcher(report),
+              const SizedBox(height: 12),
+              if (_tab == _ReportTab.invoices) ..._buildInvoiceList(context, report) else ..._buildProductList(report),
+            ],
+          );
+        },
       ),
     );
   }
 
-  Widget _buildSummaryCard(List<TransactionModel> items) {
-    final color = _isIncome ? AppColors.income : AppColors.expense;
-    final total = items.fold<int>(0, (sum, item) => sum + item.amount);
+  // ─── Periode ──────────────────────────────────────────────────────────────
 
-    // SafeArea(top: false) supaya card ini tidak ketutupan gesture/nav bar
-    // bawaan HP — Scaffold tidak otomatis menghindari inset bawah untuk body.
-    return SafeArea(
-      top: false,
-      child: Container(
-        margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.border),
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text('Total Laporan', style: AppTextStyle.labelMd),
-                  const SizedBox(height: 4),
-                  Text('${items.length}', style: AppTextStyle.titleMd),
-                ],
-              ),
-            ),
-            const SizedBox(width: 16),
-            Container(width: 1, height: 36, color: AppColors.border),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text('Total Nominal', style: AppTextStyle.labelMd),
-                  const SizedBox(height: 4),
-                  Text(AppCurrency.format(total), style: AppTextStyle.titleMd.copyWith(color: color)),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildCard(BuildContext context, TransactionModel item, bool isOwner) {
-    final color = _isIncome ? AppColors.income : AppColors.expense;
-    final background = _isIncome ? AppColors.incomeBackground : AppColors.expenseBackground;
+  Widget _buildPeriodSelector(BuildContext context, SalesReportState state) {
+    final cubit = context.read<SalesReportCubit>();
+    final range = state.range;
+    final isCustom = range.period == ReportPeriod.custom;
 
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(color: AppColors.border),
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(color: background, shape: BoxShape.circle),
-                child: Icon(
-                  _isIncome ? Icons.arrow_downward_rounded : Icons.arrow_upward_rounded,
-                  color: color,
-                  size: 20,
+              for (final (index, period) in ReportPeriod.values.indexed) ...[
+                if (index > 0) const SizedBox(width: 8),
+                Expanded(
+                  child: _buildPeriodChip(
+                    label: period.label,
+                    selected: range.period == period,
+                    onTap: period == ReportPeriod.custom
+                        ? () => ReportLogic.pickCustomRange(context)
+                        : () => cubit.setPeriod(period),
+                  ),
                 ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      '${item.itemName} ×${item.quantity}',
-                      style: AppTextStyle.labelLg,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 2),
-                    Text(item.categoryName, style: AppTextStyle.labelSm.copyWith(color: AppColors.textMuted)),
-                    const SizedBox(height: 2),
-                    Text(
-                      AppDate.format(item.date),
-                      style: AppTextStyle.labelSm.copyWith(color: AppColors.textDisabled),
-                    ),
-                    if (item.note.isNotEmpty) ...[
-                      const SizedBox(height: 6),
-                      Text('Catatan:', style: AppTextStyle.labelSm.copyWith(fontWeight: AppFontWeight.bold)),
-                      const SizedBox(height: 2),
-                      Text(item.note, style: AppTextStyle.labelSm.copyWith(color: AppColors.textDisabled)),
-                    ],
-                  ],
-                ),
-              ),
-              const SizedBox(width: 8),
-              Text(
-                '${_isIncome ? '+' : '-'}${AppCurrency.format(item.amount)}',
-                style: AppTextStyle.currencySm.copyWith(color: color),
-              ),
+              ],
             ],
           ),
-          const SizedBox(height: 12),
-          const Divider(height: 1, color: AppColors.border),
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
           Row(
-            mainAxisAlignment: MainAxisAlignment.end,
             children: [
-              _buildActionButton(
-                label: 'Ubah',
-                icon: Icons.edit_outlined,
-                color: AppColors.textMuted,
-                onPressed: () => ReportLogic.openEditEntrySheet(context, item),
+              if (!isCustom)
+                IconButton(
+                  tooltip: 'Sebelumnya',
+                  icon: const Icon(Icons.chevron_left_rounded),
+                  onPressed: () => cubit.shift(-1),
+                ),
+              Expanded(
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(8),
+                  onTap: isCustom ? () => ReportLogic.pickCustomRange(context) : null,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.calendar_month_outlined, size: 18, color: AppColors.primary),
+                        const SizedBox(width: 6),
+                        Flexible(
+                          child: Text(
+                            range.label,
+                            style: AppTextStyle.titleSm,
+                            textAlign: TextAlign.center,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        if (isCustom) ...[
+                          const SizedBox(width: 6),
+                          const Icon(Icons.edit_calendar_outlined, size: 16, color: AppColors.textMuted),
+                        ],
+                      ],
+                    ),
+                  ),
+                ),
               ),
-              if (isOwner)
-                _buildActionButton(
-                  label: 'Hapus',
-                  icon: Icons.delete_outline_rounded,
-                  color: AppColors.error,
-                  onPressed: () => ReportLogic.confirmDeleteEntry(context, item),
+              if (!isCustom)
+                IconButton(
+                  tooltip: 'Berikutnya',
+                  icon: const Icon(Icons.chevron_right_rounded),
+                  onPressed: state.canGoNext ? () => cubit.shift(1) : null,
                 ),
             ],
           ),
@@ -249,21 +169,260 @@ class ReportView extends StatelessWidget {
     );
   }
 
-  Widget _buildActionButton({
-    required String label,
-    required IconData icon,
-    required Color color,
-    required VoidCallback onPressed,
-  }) {
-    return TextButton.icon(
-      onPressed: onPressed,
-      icon: Icon(icon, size: 16, color: color),
-      label: Text(label, style: AppTextStyle.labelSm.copyWith(color: color)),
-      style: TextButton.styleFrom(
-        padding: const EdgeInsets.symmetric(horizontal: 8),
-        minimumSize: Size.zero,
-        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+  Widget _buildPeriodChip({required String label, required bool selected, required VoidCallback onTap}) {
+    return Material(
+      color: selected ? AppColors.primary : AppColors.surfaceVariant,
+      borderRadius: BorderRadius.circular(10),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(10),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 9),
+          child: Text(
+            label,
+            textAlign: TextAlign.center,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: AppTextStyle.labelMd.copyWith(color: selected ? Colors.white : AppColors.textSecondary),
+          ),
+        ),
       ),
     );
+  }
+
+  // ─── Ringkasan ────────────────────────────────────────────────────────────
+
+  Widget _buildSummary(SalesSummary summary) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(colors: [AppColors.primaryDark, AppColors.primary]),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Omzet', style: AppTextStyle.labelMd.copyWith(color: Colors.white.withValues(alpha: 0.85))),
+          const SizedBox(height: 2),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(AppCurrency.format(summary.revenue), style: AppTextStyle.h3.copyWith(color: Colors.white)),
+          ),
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              Expanded(child: _buildSummaryItem('Nota', '${summary.invoiceCount}')),
+              Expanded(child: _buildSummaryItem('Barang Terjual', '${summary.quantity}')),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSummaryItem(String label, String value) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: AppTextStyle.labelSm.copyWith(color: Colors.white.withValues(alpha: 0.8))),
+        const SizedBox(height: 2),
+        Text(
+          value,
+          style: AppTextStyle.titleSm.copyWith(color: Colors.white),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+      ],
+    );
+  }
+
+  // ─── Cari & filter aktif ──────────────────────────────────────────────────
+
+  Widget _buildSearchField(BuildContext context) {
+    return TextField(
+      onChanged: context.read<SalesReportCubit>().setQuery,
+      style: AppTextStyle.bodySm.copyWith(color: AppColors.textPrimary),
+      decoration: const InputDecoration(
+        hintText: 'Cari No. Nota atau nama barang...',
+        hintStyle: TextStyle(color: AppColors.textHint, fontSize: AppFontSize.sm),
+        prefixIcon: Icon(Icons.search_rounded, color: AppColors.textDisabled, size: 20),
+        isDense: true,
+      ),
+    );
+  }
+
+  Widget _buildActiveFilters(BuildContext context, SalesReportState state) {
+    final cubit = context.read<SalesReportCubit>();
+    final categoryName = ReportLogic.categoryName(state.categoryId);
+
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: [
+        if (categoryName != null)
+          InputChip(
+            label: Text('Kategori: $categoryName', style: AppTextStyle.labelMd),
+            onDeleted: () => cubit.setFilter(cashierName: state.cashierName),
+          ),
+        if (state.cashierName != null)
+          InputChip(
+            label: Text('Kasir: ${state.cashierName}', style: AppTextStyle.labelMd),
+            onDeleted: () => cubit.setFilter(categoryId: state.categoryId),
+          ),
+      ],
+    );
+  }
+
+  // ─── Tab ──────────────────────────────────────────────────────────────────
+
+  Widget _buildTabSwitcher(SalesReport report) {
+    Widget option(_ReportTab tab, String label) {
+      final selected = _tab == tab;
+      return Expanded(
+        child: GestureDetector(
+          onTap: () => setState(() => _tab = tab),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 150),
+            padding: const EdgeInsets.symmetric(vertical: 9),
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: selected ? AppColors.surface : Colors.transparent,
+              borderRadius: BorderRadius.circular(8),
+              boxShadow: selected
+                  ? [BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 6, offset: const Offset(0, 2))]
+                  : null,
+            ),
+            child: Text(
+              label,
+              style: AppTextStyle.labelLg.copyWith(color: selected ? AppColors.primaryDark : AppColors.textMuted),
+            ),
+          ),
+        ),
+      );
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(3),
+      decoration: BoxDecoration(color: AppColors.surfaceVariant, borderRadius: BorderRadius.circular(10)),
+      child: Row(
+        children: [
+          option(_ReportTab.invoices, 'Nota (${report.invoices.length})'),
+          option(_ReportTab.products, 'Per Barang (${report.products.length})'),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmpty(String text) {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Text(text, style: AppTextStyle.bodySm, textAlign: TextAlign.center),
+    );
+  }
+
+  // ─── Tab Nota ─────────────────────────────────────────────────────────────
+
+  List<Widget> _buildInvoiceList(BuildContext context, SalesReport report) {
+    if (report.days.isEmpty) return [_buildEmpty('Tidak ada penjualan pada periode ini.')];
+
+    return [
+      for (final day in report.days) ...[
+        Padding(
+          padding: const EdgeInsets.only(top: 4, bottom: 8),
+          child: Row(
+            children: [
+              Expanded(child: Text(AppDate.weekdayDate(day.day), style: AppTextStyle.titleSm)),
+              Text(
+                '${day.invoices.length} nota · ${AppCurrency.format(day.total)}',
+                style: AppTextStyle.labelMd.copyWith(color: AppColors.primaryDark),
+              ),
+            ],
+          ),
+        ),
+        for (final invoice in day.invoices)
+          Padding(padding: const EdgeInsets.only(bottom: 8), child: _buildInvoiceCard(context, invoice)),
+        const SizedBox(height: 8),
+      ],
+    ];
+  }
+
+  Widget _buildInvoiceCard(BuildContext context, SalesInvoice invoice) => InvoiceCard(invoice: invoice);
+
+  // ─── Tab Per Barang ───────────────────────────────────────────────────────
+
+  List<Widget> _buildProductList(SalesReport report) {
+    if (report.products.isEmpty) return [_buildEmpty('Tidak ada barang terjual pada periode ini.')];
+    final maxQuantity = report.products.first.quantity;
+
+    return [
+      Container(
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppColors.border),
+        ),
+        child: Column(
+          children: [
+            for (final (index, item) in report.products.indexed) ...[
+              if (index > 0) const Divider(height: 1, color: AppColors.divider),
+              Padding(
+                padding: const EdgeInsets.all(12),
+                child: Row(
+                  children: [
+                    SizedBox(
+                      width: 24,
+                      child: Text('${index + 1}', style: AppTextStyle.labelLg.copyWith(color: AppColors.textMuted)),
+                    ),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  item.name,
+                                  style: AppTextStyle.labelLg,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Text(AppCurrency.format(item.revenue), style: AppTextStyle.labelLg),
+                            ],
+                          ),
+                          const SizedBox(height: 6),
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(4),
+                            child: LinearProgressIndicator(
+                              value: maxQuantity == 0 ? 0 : item.quantity / maxQuantity,
+                              minHeight: 6,
+                              backgroundColor: AppColors.surfaceVariant,
+                              color: AppColors.primaryLight,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            '${item.quantity} terjual · ${item.categoryName}',
+                            style: AppTextStyle.labelSm.copyWith(color: AppColors.textMuted),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    ];
   }
 }

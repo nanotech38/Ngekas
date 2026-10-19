@@ -8,20 +8,15 @@ import 'package:ngekas/services/navigation_services.dart';
 
 // ─── CategoryDropdownField ──────────────────────────────────────────────────
 //
-// Dropdown pilih kategori (searchable, via dropdown_button2) yang dipakai
-// bareng oleh ReportEntryFormSheet (kategori wajib dipilih) & ReportFilterSheet
-// (kategori sebagai filter opsional, ada pilihan "Semua Kategori"). Kalau
-// belum ada kategori sama sekali untuk tipe ini, tampil ajakan ke Kelola
-// Kategori sebagai pengganti dropdown-nya.
+// Dropdown pilih kategori barang (searchable, via dropdown_button2) yang
+// dipakai bareng oleh form barang (wajib dipilih) & filter laporan (opsional,
+// ada pilihan "Semua Kategori"). Kalau belum ada kategori sama sekali, tampil
+// ajakan ke Kelola Kategori sebagai pengganti dropdown-nya.
 //
 // `value` cukup id kategori yang sedang dipilih; `onChanged` mengembalikan
-// CategoryModel penuh (bukan cuma id) supaya pemanggil yang butuh nama
-// kategori (mis. ReportEntryFormSheet) tidak perlu simpan+cari sendiri daftar
-// kategorinya lagi — null berarti "Semua Kategori"/tidak ada yang dipilih.
+// CategoryModel penuh — null berarti "Semua Kategori"/tidak ada yang dipilih.
 
 class CategoryDropdownField extends StatefulWidget {
-  final String ownerId;
-  final CategoryType type;
   final String? value;
   final ValueChanged<CategoryModel?> onChanged;
   final String hintText;
@@ -31,8 +26,6 @@ class CategoryDropdownField extends StatefulWidget {
 
   const CategoryDropdownField({
     super.key,
-    required this.ownerId,
-    required this.type,
     required this.value,
     required this.onChanged,
     this.hintText = 'Pilih kategori',
@@ -73,38 +66,24 @@ class _CategoryDropdownFieldState extends State<CategoryDropdownField> {
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<List<CategoryModel>>(
-      stream: CategoryService.watch(widget.ownerId),
+      stream: CategoryService.watch(),
       builder: (context, snapshot) {
-        final categories = (snapshot.data ?? const [])
-            .where((c) => c.type == widget.type)
-            .toList();
+        final categories = snapshot.data ?? const <CategoryModel>[];
 
         // DropdownButton2 mengharuskan PERSIS satu item cocok dengan value
-        // yang sedang dipilih. Kalau widget ini dibuka lagi dengan value
-        // lama (mis. filter yang sudah diterapkan sebelumnya) sebelum
-        // StreamBuilder sempat dapat snapshot pertama — atau kategorinya
-        // sudah dihapus — value itu tidak akan ketemu di `categories` dan
-        // dropdown_button2 crash. Sisipkan placeholder biar tetap konsisten
-        // sampai data aslinya kebaca (atau tetap valid kalau memang sudah
-        // dihapus).
+        // yang sedang dipilih. Sisipkan placeholder kalau value lama belum/
+        // tidak ada di list (mis. kategorinya sudah dihapus) biar tidak crash.
         final selectedId = widget.value;
-        final hasSelectedInList =
-            selectedId == null || categories.any((c) => c.id == selectedId);
+        final hasSelectedInList = selectedId == null || categories.any((c) => c.id == selectedId);
 
-        if (categories.isEmpty && !widget.includeAllOption && selectedId == null) {
+        if (snapshot.hasData && categories.isEmpty && !widget.includeAllOption && selectedId == null) {
           return Container(
             padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: AppColors.surfaceVariant,
-              borderRadius: BorderRadius.circular(12),
-            ),
+            decoration: BoxDecoration(color: AppColors.surfaceVariant, borderRadius: BorderRadius.circular(12)),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Belum ada kategori untuk tipe ini.',
-                  style: AppTextStyle.bodySm,
-                ),
+                const Text('Belum ada kategori barang.', style: AppTextStyle.bodySm),
                 const SizedBox(height: 8),
                 OutlinedButton(
                   onPressed: () {
@@ -120,34 +99,22 @@ class _CategoryDropdownFieldState extends State<CategoryDropdownField> {
 
         return DropdownButtonFormField2<String>(
           isExpanded: true,
-          hint: Text(
-            widget.hintText,
-            style: AppTextStyle.labelMd.copyWith(color: AppColors.textHint),
-          ),
+          hint: Text(widget.hintText, style: AppTextStyle.labelMd.copyWith(color: AppColors.textHint)),
           items: [
             if (widget.includeAllOption)
               DropdownItem<String>(
                 value: null,
-                child: Text(
-                  widget.allOptionLabel,
-                  style: AppTextStyle.bodySm.copyWith(color: AppColors.textPrimary),
-                ),
+                child: Text(widget.allOptionLabel, style: AppTextStyle.bodySm.copyWith(color: AppColors.textPrimary)),
               ),
             if (selectedId != null && !hasSelectedInList)
               DropdownItem<String>(
                 value: selectedId,
-                child: Text(
-                  'Memuat...',
-                  style: AppTextStyle.bodySm.copyWith(color: AppColors.textMuted),
-                ),
+                child: Text('Kategori tidak tersedia', style: AppTextStyle.bodySm.copyWith(color: AppColors.textMuted)),
               ),
             ...categories.map(
               (c) => DropdownItem<String>(
                 value: c.id,
-                child: Text(
-                  c.name,
-                  style: AppTextStyle.bodySm.copyWith(color: AppColors.textPrimary),
-                ),
+                child: Text(c.name, style: AppTextStyle.bodySm.copyWith(color: AppColors.textPrimary)),
               ),
             ),
           ],
@@ -164,72 +131,25 @@ class _CategoryDropdownFieldState extends State<CategoryDropdownField> {
           },
           validator: widget.validator,
           buttonStyleData: const FormFieldButtonStyleData(padding: EdgeInsets.zero),
-          menuItemStyleData: const MenuItemStyleData(
-            useDecorationHorizontalPadding: true,
-          ),
-          decoration: InputDecoration(
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 14,
-            ),
-            hintStyle: AppTextStyle.labelMd.copyWith(color: AppColors.textHint),
-            filled: true,
-            fillColor: AppColors.surface,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: AppColors.border, width: 1.5),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: AppColors.border, width: 1.5),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: AppColors.primary, width: 2),
-            ),
-          ),
+          menuItemStyleData: const MenuItemStyleData(useDecorationHorizontalPadding: true),
+          decoration: appDropdownDecoration(),
           dropdownStyleData: DropdownStyleData(
             maxHeight: 300,
-            decoration: BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: BorderRadius.circular(12),
-            ),
+            decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(12)),
           ),
           dropdownSearchData: DropdownSearchData<String>(
             searchController: _searchController,
             searchBarWidgetHeight: 50,
-            searchBarWidget: Padding(
-              padding: const EdgeInsets.fromLTRB(8, 8, 8, 4),
-              child: TextFormField(
-                controller: _searchController,
-                decoration: InputDecoration(
-                  isDense: true,
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 8,
-                  ),
-                  hintText: 'Cari kategori...',
-                  hintStyle: AppTextStyle.labelMd.copyWith(color: AppColors.textHint),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                ),
-              ),
-            ),
+            searchBarWidget: appDropdownSearchBar(_searchController, 'Cari kategori...'),
             searchMatchFn: (item, searchValue) {
               if (item.value == null) {
-                return widget.allOptionLabel.toLowerCase().contains(
-                  searchValue.toLowerCase(),
-                );
+                return widget.allOptionLabel.toLowerCase().contains(searchValue.toLowerCase());
               }
               final category = categories.where((c) => c.id == item.value).firstOrNull;
               if (category == null) return false;
-              return category.name.toLowerCase().contains(
-                searchValue.toLowerCase(),
-              );
+              return category.name.toLowerCase().contains(searchValue.toLowerCase());
             },
-            noResultsWidget: const Padding(
-              padding: EdgeInsets.all(12),
-              child: Text('Kategori tidak ditemukan'),
-            ),
+            noResultsWidget: const Padding(padding: EdgeInsets.all(12), child: Text('Kategori tidak ditemukan')),
           ),
           onMenuStateChange: (isOpen) {
             if (!isOpen) _searchController.clear();
@@ -238,4 +158,43 @@ class _CategoryDropdownFieldState extends State<CategoryDropdownField> {
       },
     );
   }
+}
+
+// Dekorasi & search bar bersama untuk dropdown searchable (kategori/barang)
+// supaya tampilannya konsisten dengan AppTextField.
+InputDecoration appDropdownDecoration() {
+  return InputDecoration(
+    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+    hintStyle: AppTextStyle.labelMd.copyWith(color: AppColors.textHint),
+    filled: true,
+    fillColor: AppColors.surface,
+    border: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(12),
+      borderSide: const BorderSide(color: AppColors.border, width: 1.5),
+    ),
+    enabledBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(12),
+      borderSide: const BorderSide(color: AppColors.border, width: 1.5),
+    ),
+    focusedBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(12),
+      borderSide: const BorderSide(color: AppColors.primary, width: 2),
+    ),
+  );
+}
+
+Widget appDropdownSearchBar(TextEditingController controller, String hintText) {
+  return Padding(
+    padding: const EdgeInsets.fromLTRB(8, 8, 8, 4),
+    child: TextFormField(
+      controller: controller,
+      decoration: InputDecoration(
+        isDense: true,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        hintText: hintText,
+        hintStyle: AppTextStyle.labelMd.copyWith(color: AppColors.textHint),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+      ),
+    ),
+  );
 }

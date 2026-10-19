@@ -1,84 +1,59 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:ngekas/const/app_log_const.dart';
 import 'package:ngekas/models/category_model.dart';
-
-class CategoryException implements Exception {
-  final String message;
-
-  CategoryException(this.message);
-
-  @override
-  String toString() => message;
-}
+import 'package:ngekas/services/database_service.dart';
 
 // ─── CategoryService ────────────────────────────────────────────────────────
 //
-// Wrapper ke Firestore /workspaces/{ownerId}/categories — sama pola statis
-// dengan UserProfileService. update/delete dibatasi ke owner lewat
-// firestore.rules, jadi permission-denied dari staff ditangkap di sini dan
-// diterjemahkan jadi pesan yang bisa ditampilkan lewat AppDialog.
+// CRUD kategori barang di DatabaseService.categories (in-memory). Nama
+// kategori yang didenormalisasi di barang ikut diperbarui saat kategori
+// diubah, dan kategori yang masih dipakai barang tidak boleh dihapus.
 
 class CategoryService {
   CategoryService._();
 
   static const tag = 'CategoryService';
 
-  static CollectionReference<Map<String, dynamic>> _collection(String ownerId) =>
-      FirebaseFirestore.instance
-          .collection('workspaces')
-          .doc(ownerId)
-          .collection('categories');
+  static DatabaseService get _db => DatabaseService.instance;
 
-  static Stream<List<CategoryModel>> watch(String ownerId) {
-    return _collection(ownerId).orderBy('name').snapshots().map(
-      (snapshot) => snapshot.docs
-          .map((doc) => CategoryModel.fromMap(doc.id, doc.data()))
-          .toList(),
+  static Stream<List<CategoryModel>> watch() {
+    return _db.categories.watch().map(
+      (rows) => [...rows]..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase())),
     );
   }
 
-  static Future<void> add({
-    required String ownerId,
-    required String name,
-    required CategoryType type,
-  }) async {
-    try {
-      await _collection(ownerId).add({'name': name, 'type': type.name});
-      AppLog.i(tag, 'add: $name');
-    } catch (e, st) {
-      AppLog.e(tag, 'add: error', error: e, stackTrace: st);
-      throw CategoryException(_mapError(e));
-    }
+  static Future<void> add({required String name}) async {
+    await _db.simulateLatency();
+    _ensureUniqueName(name);
+    _db.categories.insert(CategoryModel(id: _db.newId('c'), name: name));
+    AppLog.i(tag, 'add: $name');
   }
 
-  static Future<void> update({
-    required String ownerId,
-    required String id,
-    required String name,
-  }) async {
-    try {
-      await _collection(ownerId).doc(id).update({'name': name});
-      AppLog.i(tag, 'update: $id');
-    } catch (e, st) {
-      AppLog.e(tag, 'update: error', error: e, stackTrace: st);
-      throw CategoryException(_mapError(e));
+  static Future<void> update({required String id, required String name}) async {
+    await _db.simulateLatency();
+    final existing = _db.categories.find(id);
+    if (existing == null) throw DataException('Kategori tidak ditemukan');
+    _ensureUniqueName(name, exceptId: id);
+
+    _db.categories.update(existing.copyWith(name: name));
+    for (final product in _db.products.rows.where((p) => p.categoryId == id)) {
+      _db.products.update(product.copyWith(categoryName: name));
     }
+    AppLog.i(tag, 'update: $id');
   }
 
-  static Future<void> delete({required String ownerId, required String id}) async {
-    try {
-      await _collection(ownerId).doc(id).delete();
-      AppLog.i(tag, 'delete: $id');
-    } catch (e, st) {
-      AppLog.e(tag, 'delete: error', error: e, stackTrace: st);
-      throw CategoryException(_mapError(e));
+  static Future<void> delete({required String id}) async {
+    await _db.simulateLatency();
+    final usedBy = _db.products.rows.where((p) => p.categoryId == id).length;
+    if (usedBy > 0) {
+      throw DataException('Kategori ini masih dipakai $usedBy barang. Pindahkan barangnya ke kategori lain dulu.');
     }
+    _db.categories.delete(id);
+    AppLog.i(tag, 'delete: $id');
   }
 
-  static String _mapError(Object e) {
-    if (e is FirebaseException && e.code == 'permission-denied') {
-      return 'Kamu tidak punya izin untuk melakukan ini';
-    }
-    return 'Terjadi kesalahan, silakan coba lagi';
+  static void _ensureUniqueName(String name, {String? exceptId}) {
+    final normalized = name.trim().toLowerCase();
+    final duplicate = _db.categories.rows.any((c) => c.id != exceptId && c.name.toLowerCase() == normalized);
+    if (duplicate) throw DataException('Kategori "$name" sudah ada');
   }
 }

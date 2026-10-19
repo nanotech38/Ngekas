@@ -5,19 +5,18 @@ import 'package:ngekas/const/app_theme_const.dart';
 import 'package:ngekas/logic/home_logic.dart';
 import 'package:ngekas/models/app_user.dart';
 import 'package:ngekas/screen/activity_log_screen.dart';
-import 'package:ngekas/screen/feedback_sheet.dart';
+import 'package:ngekas/screen/category_screen.dart';
 import 'package:ngekas/screen/manage_people_screen.dart';
+import 'package:ngekas/services/database_service.dart';
 import 'package:ngekas/services/navigation_services.dart';
 import 'package:ngekas/template/base_template.dart';
-import 'package:ngekas/widget/app_bottom_sheet.dart';
 import 'package:ngekas/widget/app_dialog.dart';
 
 // ─── ProfileScreen ──────────────────────────────────────────────────────────
 //
-// Tab "Profil" di bottom nav HomeScreen — info akun (email, role) plus
-// pintasan ke Riwayat Aktivitas & tombol keluar (dipindah dari AppBar Home
-// yang lama, sekarang lewat dialog konfirmasi biar tidak kepencet tidak
-// sengaja).
+// Tab "Profil" — info akun (nama, username, role) plus pintasan ke Riwayat
+// Aktivitas, Kategori Barang, Kelola Pengguna (admin), Pengaturan & tombol
+// keluar (lewat dialog konfirmasi biar tidak kepencet tidak sengaja).
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -30,7 +29,7 @@ class ProfileScreen extends StatelessWidget {
       backgroundColor: AppColors.background,
       appBar: AppBar(title: const Text('Profil')),
       child: ListView(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.fromLTRB(20, 20, 20, 96),
         children: [
           _buildUserCard(user),
           const SizedBox(height: 20),
@@ -40,20 +39,38 @@ class ProfileScreen extends StatelessWidget {
             onTap: () => NavigationService.get().push(const ActivityLogScreen()),
           ),
           _buildMenuTile(
-            icon: Icons.feedback_rounded,
-            label: 'Feedback',
-            onTap: () => AppBottomSheet.show(context, builder: (_) => const FeedbackSheet()),
+            icon: Icons.category_outlined,
+            label: 'Kategori Barang',
+            onTap: () => NavigationService.get().push(const CategoryScreen()),
           ),
-          if (user?.role == UserRole.owner)
+          if (user?.isAdmin ?? false)
             _buildMenuTile(
               icon: Icons.group_rounded,
-              label: 'Kelola Orang',
+              label: 'Kelola Pengguna',
               onTap: () => NavigationService.get().push(const ManagePeopleScreen()),
             ),
           _buildMenuTile(
             icon: Icons.settings_rounded,
             label: 'Pengaturan',
             onTap: () => HomeLogic.comingSoon(context, 'Pengaturan'),
+          ),
+          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(color: AppColors.warningLight, borderRadius: BorderRadius.circular(12)),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Icon(Icons.info_outline_rounded, size: 18, color: AppColors.warning),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Mode demo: semua data tersimpan sementara dan akan kembali seperti awal saat aplikasi ditutup.',
+                    style: AppTextStyle.labelSm.copyWith(color: AppColors.textSecondary),
+                  ),
+                ),
+              ],
+            ),
           ),
           const SizedBox(height: 20),
           SizedBox(
@@ -98,16 +115,23 @@ class ProfileScreen extends StatelessWidget {
             width: 48,
             height: 48,
             decoration: const BoxDecoration(color: AppColors.primaryContainer, shape: BoxShape.circle),
-            child: const Icon(Icons.person_rounded, color: AppColors.primary),
+            child: Icon(
+              user?.isAdmin ?? false ? Icons.admin_panel_settings_outlined : Icons.point_of_sale_rounded,
+              color: AppColors.primary,
+            ),
           ),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(user?.email ?? '-', style: AppTextStyle.titleSm, overflow: TextOverflow.ellipsis),
+                Text(user?.name ?? '-', style: AppTextStyle.titleSm, overflow: TextOverflow.ellipsis),
                 const SizedBox(height: 2),
-                Text(user?.role == UserRole.owner ? 'Owner' : 'Staff', style: AppTextStyle.bodySm),
+                Text(
+                  '@${user?.username ?? '-'} · ${user?.role.label ?? '-'} · ${DatabaseService.storeName}',
+                  style: AppTextStyle.bodySm,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ],
             ),
           ),

@@ -3,8 +3,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:ngekas/bloc/auth/auth_cubit.dart';
 import 'package:ngekas/bloc/category/category_cubit.dart';
 import 'package:ngekas/const/app_theme_const.dart';
-import 'package:ngekas/models/app_user.dart';
 import 'package:ngekas/models/category_model.dart';
+import 'package:ngekas/models/product_model.dart';
+import 'package:ngekas/services/product_service.dart';
 import 'package:ngekas/template/base_template.dart';
 import 'package:ngekas/widget/app_bottom_sheet.dart';
 import 'package:ngekas/widget/app_button.dart';
@@ -12,51 +13,29 @@ import 'package:ngekas/widget/app_dialog.dart';
 import 'package:ngekas/widget/app_text_field.dart';
 import 'package:ngekas/widget/app_toast.dart';
 
+// ─── CategoryScreen ─────────────────────────────────────────────────────────
+//
+// "Kategori Barang" — daftar kategori beserta jumlah barang di dalamnya.
+// Tambah: admin & kasir. Ubah/hapus khusus admin; kategori yang masih
+// dipakai barang tidak bisa dihapus (dicek di CategoryService).
+
 class CategoryScreen extends StatelessWidget {
   const CategoryScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final ownerId = context.read<AuthCubit>().state.user!.ownerId;
-    return BlocProvider(
-      create: (_) => CategoryCubit(ownerId: ownerId)..watch(),
-      child: const _CategoryView(),
-    );
+    return BlocProvider(create: (_) => CategoryCubit()..watch(), child: const _CategoryView());
   }
 }
 
-class _CategoryView extends StatefulWidget {
+class _CategoryView extends StatelessWidget {
   const _CategoryView();
-
-  @override
-  State<_CategoryView> createState() => _CategoryViewState();
-}
-
-class _CategoryViewState extends State<_CategoryView> with SingleTickerProviderStateMixin {
-  late final TabController _tabController;
-
-  @override
-  void initState() {
-    super.initState();
-    _tabController = TabController(length: 2, vsync: this);
-  }
-
-  @override
-  void dispose() {
-    _tabController.dispose();
-    super.dispose();
-  }
-
-  CategoryType get _activeTabType => _tabController.index == 0 ? CategoryType.income : CategoryType.expense;
 
   void _openForm(BuildContext context, {CategoryModel? existing}) {
     final cubit = context.read<CategoryCubit>();
     AppBottomSheet.show(
       context,
-      builder: (_) => BlocProvider.value(
-        value: cubit,
-        child: _CategoryFormSheet(type: existing?.type ?? _activeTabType, existing: existing),
-      ),
+      builder: (_) => BlocProvider.value(value: cubit, child: _CategoryFormSheet(existing: existing)),
     );
   }
 
@@ -68,17 +47,13 @@ class _CategoryViewState extends State<_CategoryView> with SingleTickerProviderS
       message: 'Kategori "${category.name}" akan dihapus permanen.',
       confirmText: 'Hapus',
       cancelText: 'Batal',
-      onConfirm: () => context.read<CategoryCubit>().deleteCategory(
-        id: category.id,
-        name: category.name,
-        type: category.type,
-      ),
+      onConfirm: () => context.read<CategoryCubit>().deleteCategory(id: category.id, name: category.name),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final isOwner = context.read<AuthCubit>().state.user?.role == UserRole.owner;
+    final isAdmin = context.read<AuthCubit>().state.user?.isAdmin ?? false;
 
     return BlocListener<CategoryCubit, CategoryState>(
       listener: (context, state) {
@@ -90,24 +65,14 @@ class _CategoryViewState extends State<_CategoryView> with SingleTickerProviderS
       },
       child: BaseTemplate(
         backgroundColor: AppColors.background,
-        appBar: AppBar(
-          title: const Text('Kelola Kategori'),
-          bottom: TabBar(
-            controller: _tabController,
-            labelColor: AppColors.primary,
-            unselectedLabelColor: AppColors.textMuted,
-            indicatorColor: AppColors.primary,
-            onTap: (_) => setState(() {}),
-            tabs: const [
-              Tab(text: 'Pemasukan'),
-              Tab(text: 'Pengeluaran'),
-            ],
-          ),
-        ),
+        appBar: AppBar(title: const Text('Kategori Barang')),
+        // Admin & kasir sama-sama bisa tambah kategori.
         floatingActionButton: FloatingActionButton(
           heroTag: 'category_add_fab',
+          tooltip: 'Tambah Kategori',
           onPressed: () => _openForm(context),
-          backgroundColor: AppColors.primaryLight,
+          backgroundColor: AppColors.primary,
+          foregroundColor: Colors.white,
           child: const Icon(Icons.add_rounded),
         ),
         child: BlocBuilder<CategoryCubit, CategoryState>(
@@ -115,12 +80,34 @@ class _CategoryViewState extends State<_CategoryView> with SingleTickerProviderS
             if (state.status == CategoryStatus.loading && state.categories.isEmpty) {
               return const Center(child: CircularProgressIndicator());
             }
-            return TabBarView(
-              controller: _tabController,
-              children: [
-                _buildList(context, state.categories, CategoryType.income, isOwner),
-                _buildList(context, state.categories, CategoryType.expense, isOwner),
-              ],
+            if (state.categories.isEmpty) {
+              return Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Text(
+                    'Belum ada kategori.\nTekan tombol + untuk menambahkan.',
+                    style: AppTextStyle.bodyMd,
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              );
+            }
+
+            return StreamBuilder<List<ProductModel>>(
+              stream: ProductService.watch(),
+              builder: (context, snapshot) {
+                final products = snapshot.data ?? const <ProductModel>[];
+                return ListView.separated(
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 88),
+                  itemCount: state.categories.length,
+                  separatorBuilder: (_, _) => const SizedBox(height: 10),
+                  itemBuilder: (context, index) {
+                    final category = state.categories[index];
+                    final count = products.where((p) => p.categoryId == category.id).length;
+                    return _buildCategoryTile(context, category, count, isAdmin);
+                  },
+                );
+              },
             );
           },
         ),
@@ -128,37 +115,7 @@ class _CategoryViewState extends State<_CategoryView> with SingleTickerProviderS
     );
   }
 
-  Widget _buildList(BuildContext context, List<CategoryModel> all, CategoryType type, bool isOwner) {
-    final items = all.where((c) => c.type == type).toList();
-
-    if (items.isEmpty) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Text(
-            type == CategoryType.income
-                ? 'Belum ada kategori pemasukan.\nTekan tombol + untuk menambahkan.'
-                : 'Belum ada kategori pengeluaran.\nTekan tombol + untuk menambahkan.',
-            style: AppTextStyle.bodyMd,
-            textAlign: TextAlign.center,
-          ),
-        ),
-      );
-    }
-
-    return ListView.separated(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 88),
-      itemCount: items.length,
-      separatorBuilder: (_, _) => const SizedBox(height: 10),
-      itemBuilder: (context, index) => _buildCategoryTile(context, items[index], isOwner),
-    );
-  }
-
-  Widget _buildCategoryTile(BuildContext context, CategoryModel category, bool isOwner) {
-    final isIncome = category.type == CategoryType.income;
-    final color = isIncome ? AppColors.income : AppColors.expense;
-    final background = isIncome ? AppColors.incomeBackground : AppColors.expenseBackground;
-
+  Widget _buildCategoryTile(BuildContext context, CategoryModel category, int productCount, bool isAdmin) {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -171,12 +128,21 @@ class _CategoryViewState extends State<_CategoryView> with SingleTickerProviderS
           Container(
             width: 40,
             height: 40,
-            decoration: BoxDecoration(color: background, shape: BoxShape.circle),
-            child: Icon(isIncome ? Icons.arrow_downward_rounded : Icons.arrow_upward_rounded, color: color, size: 20),
+            decoration: BoxDecoration(color: AppColors.primaryContainer, borderRadius: BorderRadius.circular(10)),
+            child: const Icon(Icons.category_outlined, color: AppColors.primary, size: 20),
           ),
           const SizedBox(width: 12),
-          Expanded(child: Text(category.name, style: AppTextStyle.titleSm)),
-          if (isOwner) ...[
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(category.name, style: AppTextStyle.titleSm),
+                const SizedBox(height: 2),
+                Text('$productCount barang', style: AppTextStyle.labelSm.copyWith(color: AppColors.textMuted)),
+              ],
+            ),
+          ),
+          if (isAdmin) ...[
             IconButton(
               tooltip: 'Ubah',
               icon: const Icon(Icons.edit_outlined, color: AppColors.textMuted),
@@ -195,10 +161,9 @@ class _CategoryViewState extends State<_CategoryView> with SingleTickerProviderS
 }
 
 class _CategoryFormSheet extends StatefulWidget {
-  final CategoryType type;
   final CategoryModel? existing;
 
-  const _CategoryFormSheet({required this.type, this.existing});
+  const _CategoryFormSheet({this.existing});
 
   @override
   State<_CategoryFormSheet> createState() => _CategoryFormSheetState();
@@ -226,28 +191,20 @@ class _CategoryFormSheetState extends State<_CategoryFormSheet> {
     if (!_formKey.currentState!.validate()) return;
 
     final cubit = context.read<CategoryCubit>();
+    final name = _nameController.text.trim();
     if (_isEdit) {
-      cubit.updateCategory(
-        id: widget.existing!.id,
-        name: _nameController.text.trim(),
-        type: widget.type,
-      );
+      cubit.updateCategory(id: widget.existing!.id, name: name);
     } else {
-      cubit.addCategory(name: _nameController.text.trim(), type: widget.type);
+      cubit.addCategory(name: name);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final isIncome = widget.type == CategoryType.income;
-
     return BlocListener<CategoryCubit, CategoryState>(
       listener: (context, state) {
-        // ModalRoute masih ter-mount selagi animasi tutup sheet berjalan, jadi
-        // listener sheet SEBELUMNYA (kalau user buka sheet baru sebelum sheet
-        // lama selesai animasi) masih ikut menerima emit ini juga. Kalau
-        // sheet ini bukan lagi route teratas, abaikan sepenuhnya — jangan pop
-        // (bisa nge-pop CategoryScreen di baliknya) atau toast dobel.
+        // Sheet lama yang masih animasi tutup ikut menerima emit — abaikan
+        // kalau sheet ini bukan lagi route teratas (jangan pop / toast dobel).
         if (!(ModalRoute.of(context)?.isCurrent ?? false)) return;
 
         if (state.status == CategoryStatus.addSuccess) {
@@ -267,22 +224,10 @@ class _CategoryFormSheetState extends State<_CategoryFormSheet> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(_isEdit ? 'Ubah Kategori' : 'Tambah Kategori', style: AppTextStyle.titleLg),
-            const SizedBox(height: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(
-                color: isIncome ? AppColors.incomeBackground : AppColors.expenseBackground,
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Text(
-                isIncome ? 'Pemasukan' : 'Pengeluaran',
-                style: AppTextStyle.labelMd.copyWith(color: isIncome ? AppColors.income : AppColors.expense),
-              ),
-            ),
             const SizedBox(height: 20),
             AppTextField(
               label: 'Nama Kategori',
-              hint: 'Contoh: Gaji, Belanja Bahan',
+              hint: 'Contoh: Oli & Pelumas, Suku Cadang',
               controller: _nameController,
               isRequired: true,
               validator: (value) => (value == null || value.trim().isEmpty) ? 'Nama kategori wajib diisi' : null,

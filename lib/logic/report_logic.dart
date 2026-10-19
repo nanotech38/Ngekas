@@ -1,109 +1,122 @@
+import 'dart:ui' as ui;
+
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:ngekas/bloc/transaction/transaction_cubit.dart';
+import 'package:ngekas/bloc/auth/auth_cubit.dart';
+import 'package:ngekas/bloc/sales_report/sales_report_cubit.dart';
 import 'package:ngekas/const/app_log_const.dart';
-import 'package:ngekas/models/category_model.dart';
-import 'package:ngekas/models/transaction_model.dart';
-import 'package:ngekas/screen/report/report_entry_form_sheet.dart';
+import 'package:ngekas/models/sales_report.dart';
+import 'package:ngekas/screen/report/invoice_detail_sheet.dart';
 import 'package:ngekas/screen/report/report_filter_sheet.dart';
-import 'package:ngekas/screen/report/report_screen.dart';
+import 'package:ngekas/screen/report/report_pdf_preview_screen.dart';
+import 'package:ngekas/services/database_service.dart';
 import 'package:ngekas/services/navigation_services.dart';
 import 'package:ngekas/widget/app_bottom_sheet.dart';
 import 'package:ngekas/widget/app_dialog.dart';
+import 'package:share_plus/share_plus.dart';
 
 // ─── ReportLogic ────────────────────────────────────────────────────────────
 //
-// Menampung proses (bukan tampilan) dari ReportScreen & ReportTypePicker.
-// Aksi yang butuh local widget state (mis. date range picker di
-// _FilterSheet, yang pakai setState) tetap di widget-nya sendiri — di sini
-// cuma yang murni "panggil cubit lalu navigasi", sama pola dengan
-// LoginLogic/HomeLogic.
+// Menampung proses (bukan tampilan) dari Laporan Penjualan — cuma yang murni
+// "panggil cubit lalu navigasi", sama pola dengan LoginLogic/HomeLogic.
 
 class ReportLogic {
   ReportLogic._();
 
   static const tag = 'ReportLogic';
 
-  // Dipanggil dari ReportTypePicker saat user pilih Pemasukan/Pengeluaran.
-  static void openReport(BuildContext context, CategoryType type) {
-    AppLog.i(tag, 'openReport: type=$type');
-    Navigator.of(context).pop();
-    NavigationService.get().push(ReportScreen(type: type));
+  // Chip "Pilih Tanggal": pilih rentang tanggal sendiri (start–end).
+  static Future<void> pickCustomRange(BuildContext context) async {
+    AppLog.i(tag, 'pickCustomRange');
+    final cubit = context.read<SalesReportCubit>();
+    final current = cubit.state.range;
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    // Rentang awal tidak boleh melewati hari ini (mis. dari "Bulanan", akhir
+    // bulan masih di depan) — kalau lewat, date picker kena assertion.
+    final end = current.end.isAfter(today) ? today : current.end;
+    final start = current.start.isAfter(end) ? end : current.start;
+    final picked = await showDateRangePicker(
+      context: context,
+      firstDate: DateTime(2020),
+      lastDate: today,
+      initialDateRange: DateTimeRange(start: start, end: end),
+      helpText: 'Pilih rentang tanggal laporan',
+      saveText: 'Terapkan',
+    );
+    if (picked != null) cubit.setCustomRange(picked.start, picked.end);
   }
 
-  // Dipanggil dari tombol filter di AppBar ReportScreen.
+  // Tombol filter di AppBar: filter kategori & kasir.
   static void openFilterSheet(BuildContext context) {
     AppLog.i(tag, 'openFilterSheet');
-    final cubit = context.read<TransactionCubit>();
-    AppBottomSheet.show(
-      context,
-      builder: (_) => BlocProvider.value(value: cubit, child: const ReportFilterSheet()),
-    );
+    final cubit = context.read<SalesReportCubit>();
+    AppBottomSheet.show(context, builder: (_) => BlocProvider.value(value: cubit, child: const ReportFilterSheet()));
   }
 
-  // Dipanggil dari tombol "Terapkan" di ReportFilterSheet.
-  static void applyFilter(
-    BuildContext context, {
-    DateTimeRange? dateRange,
-    String? categoryId,
-  }) {
-    AppLog.i(tag, 'applyFilter');
-    context.read<TransactionCubit>().applyFilter(
-      TransactionFilter(dateRange: dateRange, categoryId: categoryId),
-    );
-    Navigator.of(context).pop();
+  // Ketuk kartu nota: detail nota dalam bentuk struk + tombol bagikan.
+  static void openInvoiceDetail(BuildContext context, SalesInvoice invoice) {
+    AppLog.i(tag, 'openInvoiceDetail: ${invoice.key}');
+    AppBottomSheet.show(context, builder: (_) => InvoiceDetailSheet(invoice: invoice));
   }
 
-  // Dipanggil dari tombol "Reset Filter" di ReportFilterSheet.
-  static void resetFilter(BuildContext context) {
-    AppLog.i(tag, 'resetFilter');
-    context.read<TransactionCubit>().clearFilter();
-    Navigator.of(context).pop();
+  // Tombol "Bagikan Struk": render widget struk (RepaintBoundary) jadi PNG
+  // lalu buka share sheet bawaan HP (WhatsApp, dll).
+  static Future<void> shareReceipt(BuildContext context, GlobalKey receiptKey, SalesInvoice invoice) async {
+    AppLog.i(tag, 'shareReceipt: ${invoice.key}');
+    try {
+      final boundary = receiptKey.currentContext?.findRenderObject() as RenderRepaintBoundary?;
+      if (boundary == null) throw StateError('Struk belum siap');
+      final image = await boundary.toImage(pixelRatio: 3);
+      final data = await image.toByteData(format: ui.ImageByteFormat.png);
+      image.dispose();
+      if (data == null) throw StateError('Gagal membuat gambar struk');
+
+      final name = 'struk_${invoice.displayNo.replaceAll(RegExp(r'[^A-Za-z0-9-]'), '_')}.png';
+      await SharePlus.instance.share(
+        ShareParams(
+          files: [XFile.fromData(data.buffer.asUint8List(), mimeType: 'image/png', name: name)],
+          fileNameOverrides: [name],
+          text: 'Struk ${invoice.displayNo} - ${DatabaseService.storeName}',
+        ),
+      );
+    } catch (e, st) {
+      AppLog.e(tag, 'shareReceipt: error', error: e, stackTrace: st);
+      // MissingPluginException = plugin native belum ter-install (biasanya
+      // habis hot reload setelah tambah package) — perlu build ulang penuh.
+      final message = e is MissingPluginException
+          ? 'Fitur bagikan belum siap. Tutup aplikasi lalu jalankan ulang (bukan hot reload).'
+          : e.toString();
+      if (context.mounted) AppDialog.showError(context, title: 'Gagal Membagikan', message: message);
+    }
   }
 
-  // Dipanggil dari FAB "+" di ReportScreen.
-  static void openAddEntrySheet(BuildContext context) {
-    AppLog.i(tag, 'openAddEntrySheet');
-    final cubit = context.read<TransactionCubit>();
-    AppBottomSheet.show(
-      context,
-      builder: (_) =>
-          BlocProvider.value(value: cubit, child: const ReportEntryFormSheet()),
-    );
-  }
+  // Ikon PDF di AppBar: export sesuai periode & filter yang sedang aktif.
+  static void exportPdf(BuildContext context) {
+    AppLog.i(tag, 'exportPdf');
+    final state = context.read<SalesReportCubit>().state;
+    final user = context.read<AuthCubit>().state.user;
 
-  // Dipanggil dari tombol "Ubah" di kartu laporan.
-  static void openEditEntrySheet(BuildContext context, TransactionModel item) {
-    AppLog.i(tag, 'openEditEntrySheet: id=${item.id}');
-    final cubit = context.read<TransactionCubit>();
-    AppBottomSheet.show(
-      context,
-      builder: (_) => BlocProvider.value(
-        value: cubit,
-        child: ReportEntryFormSheet(existing: item),
+    final filterLabels = <String>[
+      if (state.categoryId != null)
+        'Kategori ${categoryName(state.categoryId) ?? '-'}',
+      if (state.cashierName != null) 'Kasir ${state.cashierName}',
+      if (state.query.trim().isNotEmpty) 'Cari "${state.query.trim()}"',
+    ];
+
+    NavigationService.get().push(
+      ReportPdfPreviewScreen(
+        report: state.report,
+        range: state.range,
+        filterLabels: filterLabels,
+        printedBy: user?.name ?? '-',
       ),
     );
   }
 
-  // Dipanggil dari tombol "Hapus" di kartu laporan — dibatasi ke role owner
-  // di ReportView, jadi di sini cukup tampilkan konfirmasi lalu hapus.
-  static void confirmDeleteEntry(BuildContext context, TransactionModel item) {
-    AppLog.i(tag, 'confirmDeleteEntry: id=${item.id}');
-    final cubit = context.read<TransactionCubit>();
-    AppDialog.show(
-      context,
-      type: AppDialogType.warning,
-      title: 'Hapus Laporan?',
-      message: 'Laporan "${item.itemName}" akan dihapus permanen.',
-      confirmText: 'Hapus',
-      cancelText: 'Batal',
-      onConfirm: () => cubit.deleteTransaction(
-        id: item.id,
-        categoryName: item.categoryName,
-        itemName: item.itemName,
-        quantity: item.quantity,
-        amount: item.amount,
-      ),
-    );
-  }
+  // Nama kategori untuk chip filter aktif.
+  static String? categoryName(String? categoryId) =>
+      categoryId == null ? null : DatabaseService.instance.categories.find(categoryId)?.name;
 }
