@@ -7,13 +7,8 @@ import 'package:ngekas/services/database_service.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 
-// ─── ReportPdfService ───────────────────────────────────────────────────────
-//
-// Menyusun PDF Laporan Penjualan dari SalesReport yang sama dengan yang
-// tampil di layar (periode + filter yang sedang aktif): ringkasan, daftar
-// nota, dan rekap per barang. Teks sengaja ASCII saja ("x", "-") karena font
-// standar PDF tidak menjamin karakter khusus seperti "×" atau "·".
-
+// teks sengaja ASCII aja ("x", "-"), font standar PDF belum tentu
+// bisa render "×" atau "·"
 class ReportPdfService {
   ReportPdfService._();
 

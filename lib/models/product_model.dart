@@ -1,24 +1,5 @@
-// ─── ProductModel ───────────────────────────────────────────────────────────
-//
-// Satu barang di inventori. `stock` SELALU dihitung dalam satuan dasar
-// (`unit`, mis. bungkus/botol) dan berubah lewat penjualan, penyesuaian
-// stok, atau stok masuk — tiap perubahan tercatat di kartu stok
-// (StockMovementModel). `categoryName` didenormalisasi supaya list tidak
-// perlu lookup ke kategori.
-//
-// Barcode:
-// - `barcodes`: barcode satuan dasar — boleh lebih dari satu (mis. kemasan
-//   lama & baru, beda distributor). Kosong kalau barangnya tidak punya
-//   barcode (mis. baut eceran).
-// - `packs`: satuan kemasan (mis. Dus isi 12) dengan barcode sendiri. Scan
-//   barcode kemasan = jumlah otomatis dikali isinya.
-// Satu barcode hanya boleh dimiliki satu barang (dicek di ProductService).
-// `sku` = kode internal unik yang dibuat otomatis (tidak ditampilkan, tapi
-// tetap bisa dipakai cari/scan).
-
 class ProductPack {
   final String name;
-  // Isi kemasan dalam satuan dasar, mis. 12 (botol per dus).
   final int factor;
   final List<String> barcodes;
 
@@ -31,8 +12,6 @@ class ProductPack {
   }
 }
 
-// Satuan yang cocok dengan barcode hasil scan: satuan dasar (pack == null,
-// faktor 1) atau salah satu kemasan.
 class ProductUnitMatch {
   final ProductModel product;
   final ProductPack? pack;
@@ -44,7 +23,6 @@ class ProductUnitMatch {
 }
 
 class ProductModel {
-  // Batas "stok menipis" — tidak diinput user, sama untuk semua barang.
   static const defaultMinStock = 5;
 
   final String id;
@@ -57,6 +35,7 @@ class ProductModel {
   final String unit;
   final int buyPrice;
   final int sellPrice;
+  // selalu dalam satuan dasar (unit), bukan kemasan
   final int stock;
   final int minStock;
 
@@ -75,14 +54,11 @@ class ProductModel {
     required this.minStock,
   });
 
-  // Harga beli opsional — 0 berarti belum diisi.
   bool get hasBuyPrice => buyPrice > 0;
 
-  // Barcode utama satuan dasar ('' kalau tidak ada).
   String get barcode => barcodes.isEmpty ? '' : barcodes.first;
   bool get hasBarcode => barcodes.isNotEmpty;
 
-  // Semua barcode milik barang ini (satuan dasar + kemasan).
   Iterable<String> get allBarcodes sync* {
     yield* barcodes;
     for (final pack in packs) {
@@ -92,7 +68,6 @@ class ProductModel {
 
   bool get hasAnyBarcode => allBarcodes.isNotEmpty;
 
-  // Satuan yang punya barcode `code`, atau null kalau bukan milik barang ini.
   ProductUnitMatch? unitForBarcode(String code) {
     if (barcodes.contains(code)) return ProductUnitMatch(this, null);
     for (final pack in packs) {
@@ -101,17 +76,13 @@ class ProductModel {
     return null;
   }
 
-  // Kemasan dengan isi terbesar (dipakai rincian stok "13 Dus + 4 bungkus").
   ProductPack? get largestPack {
     if (packs.isEmpty) return null;
     return packs.reduce((a, b) => a.factor >= b.factor ? a : b);
   }
 
-  // "134 bungkus" — jumlah dalam satuan dasar.
   String formatQty(int qty) => '$qty $unit';
 
-  // Rincian per kemasan terbesar, mis. "13 Dus + 4 bungkus". '' kalau tidak
-  // ada kemasan atau jumlahnya kurang dari satu kemasan.
   String packBreakdown(int qty) {
     final pack = largestPack;
     if (pack == null || qty.abs() < pack.factor) return '';
@@ -120,7 +91,6 @@ class ProductModel {
     return rest == 0 ? '$whole ${pack.name}' : '$whole ${pack.name} + $rest $unit';
   }
 
-  // Dipakai pencarian di Gudang & Kasir: nama, kode internal, semua barcode.
   bool matchesQuery(String query) {
     final q = query.trim().toLowerCase();
     if (q.isEmpty) return true;

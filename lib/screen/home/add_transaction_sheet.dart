@@ -6,13 +6,6 @@ import 'package:ngekas/const/app_theme_const.dart';
 import 'package:ngekas/models/transaction_model.dart';
 import 'package:ngekas/screen/report/report_entry_form_sheet.dart';
 
-// ─── AddTransactionSheet ────────────────────────────────────────────────────
-//
-// Form cepat catat satu transaksi dari Beranda / layar Barang (mis. Stok
-// Masuk untuk satu barang). Isinya memakai ulang ReportEntryFormSheet dengan
-// TransactionCubit sendiri; admin bisa ganti tipe Penjualan ↔ Pembelian
-// Stok, kasir hanya Penjualan.
-
 class AddTransactionSheet extends StatefulWidget {
   final TransactionType initialType;
   final String? initialProductId;

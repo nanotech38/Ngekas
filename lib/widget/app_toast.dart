@@ -3,14 +3,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:ngekas/const/app_theme_const.dart';
 
-// ─── AppToast ───────────────────────────────────────────────────────────────
-//
-// Notifikasi sekilas (auto-hilang, tidak perlu di-dismiss user) — beda dengan
-// AppDialog yang dipakai khusus untuk error/konfirmasi yang wajib dibaca user.
-// Dipasang lewat Overlay root MaterialApp, jadi tetap muncul walau layar
-// pemanggilnya langsung di-pop/diganti (mis. sukses registrasi lalu pindah
-// ke HomeScreen).
-
 enum AppToastType { success, warning, error }
 
 class _ToastVisual {
@@ -157,8 +149,6 @@ class _AppToastWidgetState extends State<_AppToastWidget>
     return Positioned(
       left: 24,
       right: 24,
-      // Jarak dari bawah layar. Makin besar angkanya, makin naik ke atas
-      // posisi toast-nya.
       bottom: MediaQuery.of(context).padding.bottom + 48,
       child: FadeTransition(
         opacity: _opacity,

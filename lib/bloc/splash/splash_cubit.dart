@@ -33,9 +33,6 @@ class SplashState {
       );
 }
 
-// Menyiapkan data hardcode (DatabaseService.init) sebelum masuk LoginScreen.
-// Sesi login tidak disimpan antar buka-tutup aplikasi, jadi setelah splash
-// selalu diarahkan ke LoginScreen.
 class SplashCubit extends Cubit<SplashState> {
   static const tag = 'SplashCubit';
 

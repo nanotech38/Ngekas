@@ -5,14 +5,8 @@ import 'package:archive/archive.dart';
 import 'package:ngekas/services/database_service.dart';
 import 'package:xml/xml.dart';
 
-// ─── SpreadsheetReader ──────────────────────────────────────────────────────
-//
-// Baca file .csv / .xlsx jadi tabel teks (List baris -> List sel). Sengaja
-// ditulis sendiri (bukan package `excel`) karena package Excel yang ada
-// bentrok versi `xml` dengan package `pdf`. File .xlsx = zip berisi XML:
-// cukup baca shared strings + sheet pertama. Yang dibaca hanya nilai sel
-// (bukan rumus/format).
-
+// sengaja ga pakai package excel, versi xml-nya bentrok sama package pdf.
+// xlsx cuma zip isi xml, cukup baca sharedStrings + sheet pertama
 class SpreadsheetReader {
   SpreadsheetReader._();
 
@@ -23,10 +17,7 @@ class SpreadsheetReader {
     throw DataException('Format file tidak didukung. Pakai .xlsx atau .csv');
   }
 
-  // ─── CSV ──────────────────────────────────────────────────────────────────
-
-  // Pemisah dideteksi otomatis (, ; atau tab) — Excel berbahasa Indonesia
-  // biasanya menyimpan CSV dengan ';'. Baris "sep=," dari Excel dilewati.
+  // excel locale indonesia biasanya nyimpen csv pakai ';'
   static List<List<String>> parseCsv(String input) {
     var text = input.replaceFirst('﻿', '').replaceAll('\r\n', '\n').replaceAll('\r', '\n');
     String? delimiter;
@@ -81,8 +72,6 @@ class SpreadsheetReader {
     return counts.entries.reduce((a, b) => a.value >= b.value ? a : b).key;
   }
 
-  // ─── XLSX ─────────────────────────────────────────────────────────────────
-
   static List<List<String>> parseXlsx(Uint8List bytes) {
     final Archive archive;
     try {
@@ -134,7 +123,6 @@ class SpreadsheetReader {
     return rows;
   }
 
-  // Path sheet pertama menurut workbook.xml + relasinya.
   static String? _firstSheetPath(Archive archive) {
     final workbook = archive.findFile('xl/workbook.xml');
     final rels = archive.findFile('xl/_rels/workbook.xml.rels');
@@ -151,7 +139,6 @@ class SpreadsheetReader {
     return null;
   }
 
-  // "B12" -> 1.
   static int _columnIndex(String ref) {
     var index = 0;
     for (final unit in ref.toUpperCase().codeUnits) {
@@ -161,7 +148,7 @@ class SpreadsheetReader {
     return index - 1;
   }
 
-  // Angka dari Excel: "55000.0" -> "55000", "8.997011930011E12" -> "8997011930011".
+  // excel suka nyimpen barcode jadi 8.997011930011E12
   static String _formatNumber(String raw) {
     if (raw.isEmpty) return '';
     final number = double.tryParse(raw);

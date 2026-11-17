@@ -51,8 +51,6 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
     return BlocListener<SplashCubit, SplashState>(
       listener: (context, state) {
         if (state.rc == rcSuccess) {
-          // Sesi login tidak disimpan antar buka-tutup aplikasi (data juga
-          // reset), jadi selalu mulai dari LoginScreen.
           Future.delayed(const Duration(milliseconds: 600), () {
             NavigationService.get().pushAndRemoveAll(const LoginScreen());
           });

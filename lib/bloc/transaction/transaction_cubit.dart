@@ -50,12 +50,6 @@ class TransactionState {
   }
 }
 
-// ─── TransactionCubit ───────────────────────────────────────────────────────
-//
-// Dipakai form satu transaksi (ReportEntryFormSheet lewat AddTransactionSheet,
-// mis. Stok Masuk dari layar Barang), satu instance per tipe. Laporan
-// Penjualan sendiri pakai SalesReportCubit.
-
 class TransactionCubit extends Cubit<TransactionState> {
   static const tag = 'TransactionCubit';
 

@@ -3,13 +3,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:ngekas/bloc/auth/auth_cubit.dart';
 import 'package:ngekas/const/app_log_const.dart';
 
-// ─── LoginLogic ─────────────────────────────────────────────────────────────
-//
-// Menampung proses (bukan tampilan) dari LoginScreen: apa yang terjadi saat
-// tombol "Masuk" ditekan. Tidak menyimpan state apa pun, jadi cukup dipanggil
-// lewat method statis tanpa perlu instance. State login sesungguhnya
-// (loading/sukses/error) ada di AuthCubit.
-
 class LoginLogic {
   LoginLogic._();
 

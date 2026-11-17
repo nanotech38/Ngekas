@@ -12,12 +12,6 @@ import 'package:ngekas/widget/app_button.dart';
 import 'package:ngekas/widget/app_dialog.dart';
 import 'package:share_plus/share_plus.dart';
 
-// ─── ProductImportScreen ────────────────────────────────────────────────────
-//
-// Import data barang dari file Excel (.xlsx) / CSV (khusus admin). Pilih
-// file -> pratinjau tiap baris (siap / dilewati / error) -> "Import". Ada
-// tombol bagikan template CSV supaya format kolomnya pas.
-
 class ProductImportScreen extends StatefulWidget {
   const ProductImportScreen({super.key});
 

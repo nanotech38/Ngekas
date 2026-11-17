@@ -1,15 +1,3 @@
-// ─── TransactionModel ───────────────────────────────────────────────────────
-//
-// Satu baris transaksi barang:
-// - sale     -> Penjualan (barang keluar, stok berkurang)
-// - purchase -> Pembelian Stok (barang masuk, stok bertambah)
-//
-// itemName/categoryName didenormalisasi (disalin saat transaksi dibuat)
-// supaya riwayat tetap terbaca walau barangnya kemudian diubah/dihapus.
-// `amount` = quantity × unitPrice. `invoiceNo` = nomor nota penjualan dari
-// Kasir; beberapa baris barang dalam satu pembayaran berbagi nomor yang sama
-// (kosong untuk Pembelian Stok).
-
 enum TransactionType { sale, purchase }
 
 extension TransactionTypeLabel on TransactionType {
@@ -21,6 +9,8 @@ class TransactionModel {
   final String invoiceNo;
   final TransactionType type;
   final String productId;
+  // itemName & categoryName disalin pas transaksi dibuat, biar riwayat tetap
+  // kebaca walau barangnya diedit/dihapus
   final String itemName;
   final String categoryId;
   final String categoryName;
@@ -47,6 +37,5 @@ class TransactionModel {
 
   int get amount => quantity * unitPrice;
 
-  // Kunci pengelompokan nota — baris tanpa nomor nota jadi nota sendiri.
   String get invoiceKey => invoiceNo.isNotEmpty ? invoiceNo : id;
 }

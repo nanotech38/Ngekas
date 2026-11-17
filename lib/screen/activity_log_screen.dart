@@ -10,20 +10,6 @@ import 'package:ngekas/template/base_template.dart';
 import 'package:ngekas/widget/app_bottom_sheet.dart';
 import 'package:ngekas/widget/app_button.dart';
 
-// ─── ActivityLogScreen ──────────────────────────────────────────────────────
-//
-// "Riwayat Aktivitas" — aksi tambah/ubah/hapus transaksi, barang, kategori &
-// pengguna. Filternya mengikuti Laporan Penjualan:
-// - periode Harian / Bulanan / Pilih Tanggal (+ panah ‹ ›),
-// - cari di keterangan / nama pengguna,
-// - sheet filter (ikon di AppBar): jenis data, aksi, pengguna; filter aktif
-//   tampil sebagai chip yang bisa dihapus.
-// Admin melihat semua aktivitas; kasir hanya aktivitasnya sendiri.
-// Daftar dikelompokkan per tanggal; tiap entri: ikon jenis data berwarna
-// sesuai aksi (hijau tambah, oranye ubah, merah hapus), judul singkat
-// "Tambah Barang", keterangan, lalu siapa & jam berapa.
-// Murni tampilan, data langsung lewat StreamBuilder.
-
 class ActivityLogScreen extends StatefulWidget {
   const ActivityLogScreen({super.key});
 
@@ -45,7 +31,6 @@ class _ActivityLogScreenState extends State<ActivityLogScreen> {
     return _range.end.isBefore(DateTime(now.year, now.month, now.day));
   }
 
-  // Kasir hanya melihat aktivitasnya sendiri; admin melihat semua.
   List<ActivityLogModel> _visible(List<ActivityLogModel> all) {
     final user = context.read<AuthCubit>().state.user;
     if (user == null || user.isAdmin) return all;
@@ -54,8 +39,7 @@ class _ActivityLogScreenState extends State<ActivityLogScreen> {
 
   List<ActivityLogModel> _apply(List<ActivityLogModel> all) {
     final q = _query.trim().toLowerCase();
-    // Id log berurutan (mis. l-1005): angka lebih besar = dicatat belakangan.
-    // Dipakai sebagai penentu kalau jamnya sama persis.
+    // id log urut (l-1005, l-1006, ...), dipakai kalau jamnya sama persis
     int seq(ActivityLogModel l) => int.tryParse(l.id.split('-').last) ?? 0;
     return all.where((l) {
       if (!_range.contains(l.timestamp)) return false;
@@ -65,14 +49,11 @@ class _ActivityLogScreenState extends State<ActivityLogScreen> {
       if (q.isNotEmpty && !l.searchText.contains(q)) return false;
       return true;
     }).toList()
-      // Terbaru dulu (berlaku untuk Harian, Bulanan, maupun Pilih Tanggal).
       ..sort((a, b) {
         final byTime = b.timestamp.compareTo(a.timestamp);
         return byTime != 0 ? byTime : seq(b).compareTo(seq(a));
       });
   }
-
-  // ─── Periode ──────────────────────────────────────────────────────────────
 
   void _setPeriod(ReportPeriod period) {
     final now = DateTime.now();
@@ -99,7 +80,7 @@ class _ActivityLogScreenState extends State<ActivityLogScreen> {
   Future<void> _pickCustomRange() async {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
-    // Rentang awal tidak boleh melewati hari ini (date picker kena assertion).
+    // date picker assert kalau rentangnya lewat hari ini
     final end = _range.end.isAfter(today) ? today : _range.end;
     final start = _range.start.isAfter(end) ? end : _range.start;
     final picked = await showDateRangePicker(
@@ -113,12 +94,8 @@ class _ActivityLogScreenState extends State<ActivityLogScreen> {
     if (picked != null && mounted) setState(() => _range = ReportRange.custom(picked.start, picked.end));
   }
 
-  // ─── Sheet filter ─────────────────────────────────────────────────────────
-
   void _openFilterSheet(List<ActivityLogModel> all) {
     final isAdmin = context.read<AuthCubit>().state.user?.isAdmin ?? false;
-    // Kasir cuma melihat aktivitasnya sendiri, jadi pilihan "Dilakukan Oleh"
-    // tidak ditampilkan.
     final actors = isAdmin ? ({for (final l in all) l.actorName}.toList()..sort()) : <String>[];
     AppBottomSheet.show(
       context,
@@ -313,8 +290,6 @@ class _ActivityLogScreenState extends State<ActivityLogScreen> {
     );
   }
 
-  // ─── Daftar per tanggal ───────────────────────────────────────────────────
-
   List<Widget> _buildList(List<ActivityLogModel> logs) {
     final byDay = <DateTime, List<ActivityLogModel>>{};
     for (final log in logs) {
@@ -342,9 +317,6 @@ class _ActivityLogScreenState extends State<ActivityLogScreen> {
     ];
   }
 
-  // Kartu: aksi + jenis data (badge berwarna) & jam, nama yang dikenai aksi
-  // (besar), maks. 2 baris rincian (perubahan tampil lama → baru), lalu
-  // pelaku + perannya. Ketuk = sheet detail lengkap.
   Widget _buildTile(ActivityLogModel log) {
     final visual = _visualFor(log.action);
     final preview = log.details.take(2).toList();
@@ -452,11 +424,6 @@ class _ActivityLogScreenState extends State<ActivityLogScreen> {
     );
   }
 }
-
-// ─── Sheet detail ───────────────────────────────────────────────────────────
-//
-// Detail satu aktivitas: aksi & jenis data, nama yang dikenai aksi, semua
-// rincian (perubahan tampil lama dicoret → baru), lalu siapa & kapan.
 
 class _ActivityDetailSheet extends StatelessWidget {
   final ActivityLogModel log;
@@ -624,9 +591,6 @@ class _ActivityDetailSheet extends StatelessWidget {
   }
 }
 
-// ─── Komponen kecil ─────────────────────────────────────────────────────────
-
-// Badge "Tambah Barang" / "Ubah Kategori" / "Hapus Barang" berwarna sesuai aksi.
 class _ActionBadge extends StatelessWidget {
   final ActivityLogModel log;
 
@@ -646,7 +610,6 @@ class _ActionBadge extends StatelessWidget {
   }
 }
 
-// Satu baris rincian di kartu: "Label: nilai" atau "Label: lama → baru".
 class _DetailLine extends StatelessWidget {
   final ActivityDetail detail;
   final bool compact;
@@ -702,8 +665,6 @@ class _ActorAvatar extends StatelessWidget {
     );
   }
 }
-
-// ─── Sheet filter ───────────────────────────────────────────────────────────
 
 class _ActivityFilterSheet extends StatefulWidget {
   final ActivityEntity? entity;
@@ -813,8 +774,6 @@ class _ActivityFilterSheetState extends State<_ActivityFilterSheet> {
     );
   }
 }
-
-// ─── Label & warna (dipakai layar & sheet filter) ───────────────────────────
 
 String _entityLabel(ActivityEntity entity) => switch (entity) {
   ActivityEntity.transaction => 'Transaksi',

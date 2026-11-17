@@ -12,11 +12,6 @@ import 'package:ngekas/services/navigation_services.dart';
 import 'package:ngekas/template/base_template.dart';
 import 'package:ngekas/widget/app_dialog.dart';
 
-// ─── HomeScreen ─────────────────────────────────────────────────────────────
-//
-// Shell utama setelah login: bottom nav Beranda / Barang / Laporan / Profil
-// dengan tombol Kasir di tengah (aksi paling sering dipakai di toko).
-
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -27,7 +22,6 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _index = 0;
 
-  // Tab Beranda bisa pindah ke tab Gudang lewat tombol "Gudang"-nya.
   late final List<Widget> _tabs = [
     HomeTab(onOpenProducts: () => setState(() => _index = 1)),
     const ProductScreen(),

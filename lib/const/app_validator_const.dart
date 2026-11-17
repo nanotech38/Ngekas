@@ -1,9 +1,3 @@
-// ─── AppValidator ───────────────────────────────────────────────────────────
-//
-// Kumpulan validator untuk AppTextField yang dipakai bersama di seluruh
-// halaman (bukan cuma login), supaya aturan validasi tidak diduplikasi
-// per-screen.
-
 class AppValidator {
   AppValidator._();
 

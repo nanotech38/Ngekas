@@ -1,18 +1,5 @@
 import 'package:flutter/material.dart';
 
-// ─── BaseTemplate ───────────────────────────────────────────────────────────
-//
-// Scaffold bersama dipakai di SEMUA halaman biar behaviour dasarnya (SafeArea,
-// resizeToAvoidBottomInset, dst) selalu konsisten — halaman cukup kirim
-// AppBar/FAB/bottomNavigationBar/backgroundColor lewat parameter, tidak perlu
-// bikin Scaffold sendiri-sendiri.
-//
-// Dua mode background:
-// - `backgroundColor` diisi (mis. AppColors.background) -> halaman konten
-//   biasa (Beranda, Laporan, Kategori, Profil, dll), background solid.
-// - `backgroundColor` dibiarkan null (default) -> body pakai gradient orange
-//   full-bleed, dipakai Splash/Login yang tanpa AppBar.
-
 class BaseTemplate extends StatelessWidget {
   const BaseTemplate({
     super.key,
@@ -50,8 +37,6 @@ class BaseTemplate extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // backgroundColor null berarti belum ada halaman konten solid yang minta
-    // -> fallback ke gradient (perilaku lama, dipakai Splash/Login).
     final useGradient = backgroundColor == null;
 
     return Scaffold(

@@ -6,16 +6,6 @@ import 'package:ngekas/screen/category_screen.dart';
 import 'package:ngekas/services/category_service.dart';
 import 'package:ngekas/services/navigation_services.dart';
 
-// ─── CategoryDropdownField ──────────────────────────────────────────────────
-//
-// Dropdown pilih kategori barang (searchable, via dropdown_button2) yang
-// dipakai bareng oleh form barang (wajib dipilih) & filter laporan (opsional,
-// ada pilihan "Semua Kategori"). Kalau belum ada kategori sama sekali, tampil
-// ajakan ke Kelola Kategori sebagai pengganti dropdown-nya.
-//
-// `value` cukup id kategori yang sedang dipilih; `onChanged` mengembalikan
-// CategoryModel penuh — null berarti "Semua Kategori"/tidak ada yang dipilih.
-
 class CategoryDropdownField extends StatefulWidget {
   final String? value;
   final ValueChanged<CategoryModel?> onChanged;
@@ -70,9 +60,7 @@ class _CategoryDropdownFieldState extends State<CategoryDropdownField> {
       builder: (context, snapshot) {
         final categories = snapshot.data ?? const <CategoryModel>[];
 
-        // DropdownButton2 mengharuskan PERSIS satu item cocok dengan value
-        // yang sedang dipilih. Sisipkan placeholder kalau value lama belum/
-        // tidak ada di list (mis. kategorinya sudah dihapus) biar tidak crash.
+        // DropdownButton2 crash kalau value ga ada di items (mis. kategorinya udah dihapus)
         final selectedId = widget.value;
         final hasSelectedInList = selectedId == null || categories.any((c) => c.id == selectedId);
 
@@ -160,8 +148,6 @@ class _CategoryDropdownFieldState extends State<CategoryDropdownField> {
   }
 }
 
-// Dekorasi & search bar bersama untuk dropdown searchable (kategori/barang)
-// supaya tampilannya konsisten dengan AppTextField.
 InputDecoration appDropdownDecoration() {
   return InputDecoration(
     contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),

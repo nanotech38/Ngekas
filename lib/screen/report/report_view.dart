@@ -9,18 +9,6 @@ import 'package:ngekas/models/sales_report.dart';
 import 'package:ngekas/screen/report/invoice_card.dart';
 import 'package:ngekas/template/base_template.dart';
 
-// ─── ReportView ─────────────────────────────────────────────────────────────
-//
-// Isi Laporan Penjualan:
-// - Periode: Harian / Bulanan (dengan panah ‹ › untuk pindah periode) atau
-//   Pilih Tanggal (rentang custom), selalu dengan label tanggal pasti.
-// - Ringkasan: omzet, jumlah nota, barang terjual, rata-rata per nota, laba
-//   kotor.
-// - Cari No. Nota / nama barang + filter kategori & kasir (AppBar).
-// - Tab "Nota" (dikelompokkan per tanggal + subtotal harian, ketuk untuk
-//   detail) & "Per Barang" (rekap jumlah & omzet).
-// - Export PDF sesuai periode & filter yang aktif (ikon PDF di AppBar).
-
 enum _ReportTab { invoices, products }
 
 class ReportView extends StatefulWidget {
@@ -86,8 +74,6 @@ class _ReportViewState extends State<ReportView> {
       ),
     );
   }
-
-  // ─── Periode ──────────────────────────────────────────────────────────────
 
   Widget _buildPeriodSelector(BuildContext context, SalesReportState state) {
     final cubit = context.read<SalesReportCubit>();
@@ -190,8 +176,6 @@ class _ReportViewState extends State<ReportView> {
     );
   }
 
-  // ─── Ringkasan ────────────────────────────────────────────────────────────
-
   Widget _buildSummary(SalesSummary summary) {
     return Container(
       width: double.infinity,
@@ -238,8 +222,6 @@ class _ReportViewState extends State<ReportView> {
     );
   }
 
-  // ─── Cari & filter aktif ──────────────────────────────────────────────────
-
   Widget _buildSearchField(BuildContext context) {
     return TextField(
       onChanged: context.read<SalesReportCubit>().setQuery,
@@ -274,8 +256,6 @@ class _ReportViewState extends State<ReportView> {
       ],
     );
   }
-
-  // ─── Tab ──────────────────────────────────────────────────────────────────
 
   Widget _buildTabSwitcher(SalesReport report) {
     Widget option(_ReportTab tab, String label) {
@@ -327,8 +307,6 @@ class _ReportViewState extends State<ReportView> {
     );
   }
 
-  // ─── Tab Nota ─────────────────────────────────────────────────────────────
-
   List<Widget> _buildInvoiceList(BuildContext context, SalesReport report) {
     if (report.days.isEmpty) return [_buildEmpty('Tidak ada penjualan pada periode ini.')];
 
@@ -354,8 +332,6 @@ class _ReportViewState extends State<ReportView> {
   }
 
   Widget _buildInvoiceCard(BuildContext context, SalesInvoice invoice) => InvoiceCard(invoice: invoice);
-
-  // ─── Tab Per Barang ───────────────────────────────────────────────────────
 
   List<Widget> _buildProductList(SalesReport report) {
     if (report.products.isEmpty) return [_buildEmpty('Tidak ada barang terjual pada periode ini.')];

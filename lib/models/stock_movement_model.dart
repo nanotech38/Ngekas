@@ -1,11 +1,3 @@
-// ─── StockMovementModel ─────────────────────────────────────────────────────
-//
-// Satu baris kartu stok: setiap perubahan stok barang (stok awal, penjualan,
-// stok masuk, penyesuaian) dicatat lengkap dengan saldo sesudahnya, alasan,
-// siapa & kapan. Jumlah selalu dalam satuan dasar barang. Nama & satuan
-// barang didenormalisasi supaya kartu stok tetap terbaca walau barangnya
-// sudah diubah/dihapus.
-
 enum StockMovementType { initial, sale, purchase, adjustment }
 
 extension StockMovementTypeLabel on StockMovementType {
@@ -17,8 +9,6 @@ extension StockMovementTypeLabel on StockMovementType {
   };
 }
 
-// Alasan perubahan stok lewat form Ubah Barang (wajib dipilih kalau stok
-// diubah).
 enum StockAdjustReason { incoming, opname, damaged, lost, returned, other }
 
 extension StockAdjustReasonLabel on StockAdjustReason {
@@ -38,13 +28,10 @@ class StockMovementModel {
   final String productName;
   final String unit;
   final StockMovementType type;
-  // Positif = masuk, negatif = keluar.
   final int change;
-  // Saldo stok setelah perubahan ini.
   final int balance;
   final String reason;
   final String note;
-  // Nomor referensi, mis. No. Nota penjualan.
   final String refNo;
   final String actorName;
   final DateTime date;
@@ -66,6 +53,5 @@ class StockMovementModel {
 
   bool get isIncoming => change > 0;
 
-  // Judul baris: alasan penyesuaian kalau ada, selain itu jenisnya.
   String get title => reason.isNotEmpty ? reason : type.label;
 }

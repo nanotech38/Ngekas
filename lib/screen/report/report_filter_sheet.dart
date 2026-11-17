@@ -6,11 +6,6 @@ import 'package:ngekas/const/app_theme_const.dart';
 import 'package:ngekas/widget/app_button.dart';
 import 'package:ngekas/widget/category_dropdown_field.dart';
 
-// ─── ReportFilterSheet ──────────────────────────────────────────────────────
-//
-// Filter tambahan Laporan Penjualan (di luar periode): kategori barang dan
-// kasir (khusus admin). Periode diatur lewat chip di layar laporan.
-
 class ReportFilterSheet extends StatefulWidget {
   const ReportFilterSheet({super.key});
 

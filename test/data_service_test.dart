@@ -11,9 +11,6 @@ import 'package:ngekas/services/product_service.dart';
 import 'package:ngekas/services/transaction_service.dart';
 import 'package:ngekas/services/user_profile_service.dart';
 
-// Test logika data hardcode in-memory: login 2 role, sinkronisasi stok saat
-// transaksi ditambah/diubah/dihapus, checkout kasir, dan aturan kategori.
-
 void main() {
   final db = DatabaseService.instance;
 
@@ -147,7 +144,6 @@ void main() {
     });
 
     test('kode yang sudah dipakai di-re-roll', () {
-      // Angka acak pertama (121 -> MNM-121) bentrok, kedua (456) dipakai.
       final code = ProductService.generateCode(
         'Minuman',
         existingCodes: {'MNM-121'},
@@ -212,7 +208,7 @@ void main() {
     test('barcode yang sudah dipakai barang lain ditolak', () async {
       expect(
         () => ProductService.add(
-          barcodes: ['8997011930011'], // milik Oli Mesin Matic
+          barcodes: ['8997011930011'],
           name: 'Barang Lain',
           categoryId: 'c-oli',
           unit: 'pcs',
@@ -274,8 +270,7 @@ void main() {
   });
 }
 
-// Random palsu yang mengembalikan angka berurutan dari list — dipakai untuk
-// menguji re-roll kode barang secara deterministik.
+// random palsu biar re-roll kode barang bisa dites
 class _SequenceRandom implements Random {
   _SequenceRandom(this._values);
 

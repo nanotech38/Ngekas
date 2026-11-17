@@ -3,13 +3,6 @@ import 'package:ngekas/models/app_user.dart';
 import 'package:ngekas/services/auth_service.dart';
 import 'package:ngekas/services/database_service.dart';
 
-// ─── UserProfileService ─────────────────────────────────────────────────────
-//
-// Dipakai layar "Kelola Pengguna" (admin-only): daftar akun yang terdaftar
-// di toko ini, membuat akun kasir baru, & mengeluarkan akun kasir. Tidak ada
-// pendaftaran mandiri — akun kasir hanya bisa dibuat admin. Data dari
-// DatabaseService.users.
-
 class UserProfileService {
   UserProfileService._();
 

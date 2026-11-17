@@ -2,12 +2,6 @@ import 'package:ngekas/const/app_log_const.dart';
 import 'package:ngekas/models/category_model.dart';
 import 'package:ngekas/services/database_service.dart';
 
-// ─── CategoryService ────────────────────────────────────────────────────────
-//
-// CRUD kategori barang di DatabaseService.categories (in-memory). Nama
-// kategori yang didenormalisasi di barang ikut diperbarui saat kategori
-// diubah, dan kategori yang masih dipakai barang tidak boleh dihapus.
-
 class CategoryService {
   CategoryService._();
 

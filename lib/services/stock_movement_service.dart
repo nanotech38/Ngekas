@@ -3,12 +3,7 @@ import 'package:ngekas/models/stock_movement_model.dart';
 import 'package:ngekas/services/auth_service.dart';
 import 'package:ngekas/services/database_service.dart';
 
-// ─── StockMovementService ───────────────────────────────────────────────────
-//
-// Kartu stok in-memory. `record()` dipanggil service lain SETELAH stok
-// barang diubah — `product` sudah berisi stok terbaru, jadi saldo baris ini
-// = product.stock. Pelakunya otomatis dari user yang sedang login.
-
+// record() dipanggil SETELAH stok barang diupdate, jadi saldo = product.stock
 class StockMovementService {
   StockMovementService._();
 
@@ -42,7 +37,6 @@ class StockMovementService {
     );
   }
 
-  // Kartu stok satu barang, terbaru dulu.
   static Stream<List<StockMovementModel>> watchFor(String productId) {
     return _db.stockMovements.watch().map((rows) => _sorted(rows.where((m) => m.productId == productId)));
   }

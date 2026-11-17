@@ -9,8 +9,6 @@ import 'package:ngekas/const/app_theme_const.dart';
 import 'package:ngekas/screen/splash_screen.dart';
 import 'package:ngekas/services/navigation_services.dart';
 
-// Firebase sengaja belum dipakai — semua data hardcode di memori
-// (lihat DatabaseService) dan reset tiap aplikasi dibuka ulang.
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
   SystemChrome.setSystemUIOverlayStyle(

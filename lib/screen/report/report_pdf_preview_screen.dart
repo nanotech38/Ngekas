@@ -4,12 +4,6 @@ import 'package:ngekas/models/sales_report.dart';
 import 'package:ngekas/services/report_pdf_service.dart';
 import 'package:printing/printing.dart';
 
-// ─── ReportPdfPreviewScreen ─────────────────────────────────────────────────
-//
-// Pratinjau PDF Laporan Penjualan sesuai periode & filter yang aktif saat
-// tombol export ditekan. Bilah bawah PdfPreview menyediakan tombol Bagikan
-// (WhatsApp, Drive, dll) dan Cetak / Simpan sebagai PDF.
-
 class ReportPdfPreviewScreen extends StatelessWidget {
   final SalesReport report;
   final ReportRange range;

@@ -59,18 +59,11 @@ class CashierState {
   int quantityOf(String productId) => items.where((i) => i.product.id == productId).firstOrNull?.quantity ?? 0;
 }
 
-// ─── CashierCubit ───────────────────────────────────────────────────────────
-//
-// Keranjang belanja di layar Kasir. Jumlah per barang dibatasi stok yang
-// tersedia; stok baru benar-benar berkurang saat checkout (lewat
-// TransactionService.checkout).
-
 class CashierCubit extends Cubit<CashierState> {
   static const tag = 'CashierCubit';
 
   CashierCubit() : super(const CashierState.initial());
 
-  // Mengembalikan false kalau stok tidak cukup untuk ditambah lagi.
   bool add(ProductModel product) {
     final current = state.quantityOf(product.id);
     if (current + 1 > product.stock) return false;
@@ -78,8 +71,6 @@ class CashierCubit extends Cubit<CashierState> {
     return true;
   }
 
-  // Set jumlah barang di keranjang langsung (dipakai sheet Jumlah). 0 =
-  // keluarkan dari keranjang. Mengembalikan false kalau melebihi stok.
   bool setQuantity(ProductModel product, int quantity) {
     if (quantity > product.stock) return false;
     _setQuantity(product, quantity);
@@ -92,11 +83,8 @@ class CashierCubit extends Cubit<CashierState> {
 
   void clear() => emit(state.copyWith(items: const [], status: CashierStatus.idle));
 
-  // Harga & stok barang di keranjang ikut diperbarui saat data barang
-  // berubah (mis. admin ubah harga di layar lain).
   void syncProducts(List<ProductModel> products) {
-    // Saat checkout berjalan stok memang sedang dikurangi — jangan ikut
-    // memangkas keranjang yang sedang dibayar.
+    // lagi checkout, stoknya memang sedang dikurangi. jangan ikut motong keranjang
     if (state.items.isEmpty || state.isSubmitting) return;
     final synced = <CartItem>[];
     for (final item in state.items) {

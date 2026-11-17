@@ -6,19 +6,11 @@ import 'package:ngekas/widget/app_bottom_sheet.dart';
 import 'package:ngekas/widget/app_button.dart';
 import 'package:ngekas/widget/app_text_field.dart';
 
-// ─── PackEditorSheet ────────────────────────────────────────────────────────
-//
-// Tambah/ubah satu satuan kemasan barang: nama (Dus/Box/Pak), isi dalam
-// satuan dasar, dan barcode kemasan (boleh lebih dari satu). Mengembalikan
-// ProductPack lewat Navigator.pop.
-
 class PackEditorSheet extends StatefulWidget {
   final String baseUnit;
   final ProductPack? existing;
   final String? productId;
-  // Nama kemasan lain di barang ini (tidak boleh sama).
   final Set<String> otherNames;
-  // Barcode lain di form barang (satuan dasar & kemasan lain).
   final Set<String> takenInForm;
 
   const PackEditorSheet({

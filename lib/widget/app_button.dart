@@ -1,11 +1,5 @@
 import 'package:flutter/material.dart';
 
-// ─── AppButton ──────────────────────────────────────────────────────────────
-//
-// Tombol aksi utama (full width, tinggi 52) yang dipakai di seluruh halaman
-// supaya tampilannya selaras. Warna & bentuknya ikut elevatedButtonTheme dari
-// main.dart, jadi tidak perlu di-style ulang di sini.
-
 class AppButton extends StatelessWidget {
   final String label;
   final VoidCallback? onPressed;
@@ -32,15 +26,10 @@ class AppButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Padding vertikal bawaan tema (elevatedButtonTheme di main.dart) diukur
-    // untuk tinggi 52 — kalau height di-custom lebih kecil, padding itu tetap
-    // dipaksakan tema dan bikin isi tombol kepotong. Override padding
-    // vertikal jadi 0 tiap kali height/borderRadius di-custom, biar tinggi
-    // konten murni diatur oleh SizedBox di luar.
+    // padding bawaan tema dihitung buat tinggi 52, kalau height dicustom
+    // isinya kepotong. jadi di-nol-in
     final isCustomSize = height != 52 || borderRadius != null;
 
-    // expand:false -> lebar tidak dipaksa, tombol menyesuaikan panjang label
-    // (SizedBox tanpa constraint width, ElevatedButton shrink ke kontennya).
     return SizedBox(
       width: !expand ? width : (width ?? double.infinity),
       height: height,

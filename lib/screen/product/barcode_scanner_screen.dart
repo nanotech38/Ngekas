@@ -2,14 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:ngekas/const/app_theme_const.dart';
 
-// ─── BarcodeScannerScreen ───────────────────────────────────────────────────
-//
-// Layar kamera untuk scan barcode pabrik barang (EAN-13, UPC, Code128, QR,
-// dll — semua format yang didukung mobile_scanner). Begitu barcode pertama
-// terbaca, layar ditutup dan nilainya dikembalikan lewat Navigator.pop:
-//
-//   final code = await NavigationService.get().push(const BarcodeScannerScreen());
-
 class BarcodeScannerScreen extends StatefulWidget {
   const BarcodeScannerScreen({super.key});
 
@@ -122,8 +114,6 @@ class _BarcodeScannerScreenState extends State<BarcodeScannerScreen> {
   }
 }
 
-// Bingkai area scan (persegi panjang, cocok untuk barcode garis) dengan
-// latar luar digelapkan.
 class _ScanFramePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {

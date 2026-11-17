@@ -6,22 +6,9 @@ import 'package:ngekas/models/product_model.dart';
 import 'package:ngekas/widget/app_bottom_sheet.dart';
 import 'package:ngekas/widget/app_button.dart';
 
-// ─── QuantitySheet ──────────────────────────────────────────────────────────
-//
-// Langkah 2 di Kasir: atur jumlah barang yang dibeli setelah barang dipilih
-// (manual) atau di-scan. Kalau barang punya kemasan (mis. Dus isi 12), ada
-// pilihan satuan — scan barcode dus otomatis memilih satuan Dus. Tombol − / +
-// atau ketik angka langsung, dibatasi stok. Mengembalikan jumlah DALAM
-// SATUAN DASAR lewat Navigator.pop (mis. 2 Dus -> 24) — 0 berarti barang
-// dikeluarkan dari keranjang (hanya saat mengubah barang yang sudah ada).
-//
-//   final qty = await QuantitySheet.show(context, product, initialPack: dus);
-
 class QuantitySheet extends StatefulWidget {
   final ProductModel product;
-  // Jumlah yang sudah ada di keranjang dalam satuan dasar (0 = barang baru).
   final int currentQuantity;
-  // Satuan awal (hasil scan barcode kemasan). Null = satuan dasar.
   final ProductPack? initialPack;
 
   const QuantitySheet({super.key, required this.product, this.currentQuantity = 0, this.initialPack});
@@ -49,7 +36,6 @@ class _QuantitySheetState extends State<QuantitySheet> {
   bool get _isEdit => widget.currentQuantity > 0;
   int get _factor => _pack?.factor ?? 1;
   String get _unitName => _pack?.name ?? widget.product.unit;
-  // Maksimal dalam satuan yang dipilih.
   int get _max => widget.product.stock ~/ _factor;
   int get _quantity => int.tryParse(_controller.text) ?? 0;
   int get _baseQuantity => _quantity * _factor;
@@ -74,7 +60,7 @@ class _QuantitySheetState extends State<QuantitySheet> {
   }
 
   void _setQuantity(int value) {
-    // _max bisa 0 kalau stok kurang dari 1 kemasan (mis. sisa 5, Dus isi 12).
+    // _max bisa 0 kalau sisa stok kurang dari 1 kemasan
     final clamped = _max < 1 ? 1 : value.clamp(1, _max);
     setState(() {
       _controller.text = '$clamped';

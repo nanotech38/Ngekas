@@ -51,13 +51,6 @@ class CategoryState {
   }
 }
 
-// ─── CategoryCubit ──────────────────────────────────────────────────────────
-//
-// Scoped per CategoryScreen, tapi tetap dipakai bareng oleh layar list &
-// bottom sheet form (lewat BlocProvider.value) selagi sheet terbuka. Tiap
-// aksi (add/update/delete) punya status sukses/gagal sendiri-sendiri supaya
-// listener keduanya tidak saling bereaksi ke status yang bukan urusannya.
-
 class CategoryCubit extends Cubit<CategoryState> {
   static const tag = 'CategoryCubit';
 

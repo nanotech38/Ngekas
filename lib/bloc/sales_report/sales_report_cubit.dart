@@ -67,10 +67,8 @@ class SalesReportState {
 
   bool get hasExtraFilter => categoryId != null || cashierName != null;
 
-  // Nama kasir yang pernah tercatat di penjualan, untuk pilihan filter.
   List<String> get cashierNames => {for (final t in sales) t.actorName}.toList()..sort();
 
-  // Boleh maju ke periode berikutnya selama belum melewati hari ini.
   bool get canGoNext {
     final now = DateTime.now();
     return range.end.isBefore(DateTime(now.year, now.month, now.day));
@@ -86,8 +84,6 @@ class SalesReportState {
 
     final q = query.trim().toLowerCase();
     if (q.isEmpty) return inRange;
-    // Cari per nota: kalau salah satu barang / nomor notanya cocok, satu nota
-    // ditampilkan utuh.
     final matchedKeys = {
       for (final t in inRange)
         if (t.invoiceNo.toLowerCase().contains(q) || t.itemName.toLowerCase().contains(q)) t.invoiceKey,
@@ -97,12 +93,6 @@ class SalesReportState {
 
   SalesReport get report => SalesReport.build(filteredLines, products);
 }
-
-// ─── SalesReportCubit ───────────────────────────────────────────────────────
-//
-// State layar Laporan Penjualan: data penjualan + barang (untuk laba kotor),
-// periode (Harian / Bulanan / custom), pencarian, serta filter kategori &
-// kasir.
 
 class SalesReportCubit extends Cubit<SalesReportState> {
   static const tag = 'SalesReportCubit';
@@ -139,7 +129,6 @@ class SalesReportCubit extends Cubit<SalesReportState> {
     emit(state.copyWith(range: ReportRange.custom(start, end), status: SalesReportStatus.loaded));
   }
 
-  // Mundur (-1) / maju (+1) satu hari atau satu bulan.
   void shift(int step) {
     final range = state.range;
     final next = switch (range.period) {

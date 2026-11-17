@@ -137,10 +137,7 @@ class _AppTextFieldState extends State<AppTextField> {
             filled: true,
             fillColor: widget.enabled ? AppColors.surface : AppColors.background,
             prefixIcon: _buildPrefixIcon(colorScheme),
-            // Default InputDecorator memaksa prefixIcon minimal 48x48 (pas
-            // untuk Icon asli), tapi bikin "Rp" (cuma Text pendek) tidak
-            // center vertikal. Kecilkan constraint-nya khusus currency biar
-            // areanya pas mengikuti ukuran teks, bukan kotak 48x48 kosong.
+            // default prefixIcon minimal 48x48, bikin "Rp" ga center
             prefixIconConstraints: widget.type == FieldType.currency
                 ? const BoxConstraints(minWidth: 0, minHeight: 0)
                 : null,

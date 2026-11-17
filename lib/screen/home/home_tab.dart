@@ -20,24 +20,10 @@ enum _SalesPeriod { today, month }
 extension on _SalesPeriod {
   String get label => this == _SalesPeriod.today ? 'Harian' : 'Bulanan';
 
-  // Tanggal pasti periode ini, mis. "12 Okt 2026" atau "Oktober 2026".
   String rangeLabel(DateTime now) => this == _SalesPeriod.today ? AppDate.format(now) : AppDate.monthYear(now);
 }
 
-// Ringkasan penjualan satu barang dalam periode terpilih (untuk "Barang
-// Paling Laku").
 typedef _BestSeller = ({String name, String categoryName, int quantity, int revenue});
-
-// ─── HomeTab ────────────────────────────────────────────────────────────────
-//
-// Tab "Beranda" — ringkasan toko:
-// 1. Total penjualan barang (toggle Harian / Bulanan, bisa disembunyikan
-//    lewat ikon mata).
-// 2. Tombol pintas Kasir & Barang.
-// 3. Barang paling laku pada periode yang sama dengan toggle di atas.
-// 4. Transaksi terbaru (5 nota terakhir, ketuk = lihat struk).
-// Murni tampilan, data langsung dari TransactionService.watch.
-// `onOpenProducts` dipanggil tombol Barang untuk pindah ke tab Barang.
 
 class HomeTab extends StatefulWidget {
   final VoidCallback? onOpenProducts;
@@ -483,8 +469,6 @@ class _HomeTabState extends State<HomeTab> {
     );
   }
 
-  // 5 nota penjualan terakhir — kartunya sama dengan Laporan Penjualan dan
-  // bisa diketuk untuk lihat struk.
   Widget _buildRecentSection(BuildContext context, List<TransactionModel> all) {
     final sales = all.where((t) => t.type == TransactionType.sale).toList();
     final recent = SalesReport.build(sales, const {}).invoices.take(5).toList();

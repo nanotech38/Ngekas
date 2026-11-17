@@ -13,19 +13,9 @@ import 'package:ngekas/widget/app_text_field.dart';
 import 'package:ngekas/widget/app_toast.dart';
 import 'package:ngekas/widget/product_dropdown_field.dart';
 
-// ─── ReportEntryFormSheet ───────────────────────────────────────────────────
-//
-// Isi bottom sheet "Tambah/Ubah Penjualan" atau "Tambah/Ubah Pembelian Stok".
-// Tipe transaksi mengikuti TransactionCubit yang di-provide pemanggil
-// (ReportScreen atau AddTransactionSheet). Harga satuan otomatis terisi dari
-// harga jual/beli barang yang dipilih (tetap bisa diubah, mis. ada diskon).
-// `existing` diisi kalau dibuka dari tombol "Ubah" di kartu transaksi.
-
 class ReportEntryFormSheet extends StatefulWidget {
   final TransactionModel? existing;
   final String? initialProductId;
-  // Widget tambahan di samping & di bawah judul (dipakai AddTransactionSheet
-  // untuk tombol tutup & toggle tipe).
   final Widget? headerAction;
   final Widget? headerBelowTitle;
 
@@ -84,7 +74,6 @@ class _ReportEntryFormSheetState extends State<ReportEntryFormSheet> {
 
   int _priceOf(ProductModel product) => _isSale ? product.sellPrice : product.buyPrice;
 
-  // Harga beli boleh kosong (0) — biarkan field kosong supaya user isi sendiri.
   String _priceText(ProductModel product) {
     final price = _priceOf(product);
     return price > 0 ? AppCurrency.formatDigits(price) : '';
@@ -93,8 +82,6 @@ class _ReportEntryFormSheetState extends State<ReportEntryFormSheet> {
   int get _quantity => int.tryParse(_quantityController.text) ?? 0;
   int get _unitPrice => int.tryParse(_unitPriceController.text.replaceAll('.', '')) ?? 0;
 
-  // Stok yang bisa dijual untuk barang terpilih. Saat mengubah penjualan
-  // barang yang sama, jumlah lama dihitung "kembali" ke stok.
   int? get _availableStock {
     if (_productId == null) return null;
     final product = DatabaseService.instance.products.find(_productId!);
@@ -157,8 +144,7 @@ class _ReportEntryFormSheetState extends State<ReportEntryFormSheet> {
 
     return BlocListener<TransactionCubit, TransactionState>(
       listener: (context, state) {
-        // Sheet lama yang masih animasi tutup bisa ikut kebagian emit ini —
-        // abaikan kalau route ini sudah bukan yang teratas lagi.
+        // skip kalau sheet ini udah bukan route teratas, biar ga pop/toast dobel
         if (!(ModalRoute.of(context)?.isCurrent ?? false)) return;
 
         if (state.status == TransactionStatus.addSuccess) {

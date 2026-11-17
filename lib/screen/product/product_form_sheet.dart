@@ -16,19 +16,6 @@ import 'package:ngekas/widget/app_text_field.dart';
 import 'package:ngekas/widget/app_toast.dart';
 import 'package:ngekas/widget/category_dropdown_field.dart';
 
-// ─── ProductFormSheet ───────────────────────────────────────────────────────
-//
-// Bottom sheet "Tambah Barang" (admin & kasir) / "Ubah Barang" (admin: semua
-// field; kasir: nama & stok saja). Isian: nama, kategori, harga jual, satuan
-// dasar, stok, barcode satuan dasar (boleh banyak), dan kemasan (mis. Dus isi
-// 12, masing-masing dengan barcode). Stok selalu dalam satuan dasar; tombol
-// "Tambah per kemasan" membantu input barang datang per dus.
-//
-// Saat ubah: kalau stok berubah, alasan perubahan WAJIB dipilih (Barang
-// Datang / Stock Opname / Rusak / ...) — tercatat di kartu stok & Riwayat
-// Aktivitas. Harga beli & kode internal tidak ditampilkan (nilainya tetap
-// dibawa saat simpan).
-
 class ProductFormSheet extends StatefulWidget {
   final ProductModel? existing;
 
@@ -86,8 +73,6 @@ class _ProductFormSheetState extends State<ProductFormSheet> {
       if (!identical(pack, except)) ...pack.barcodes,
   };
 
-  // ─── Kemasan ──────────────────────────────────────────────────────────────
-
   Future<void> _editPack([ProductPack? pack]) async {
     final result = await PackEditorSheet.show(
       context,
@@ -110,9 +95,6 @@ class _ProductFormSheetState extends State<ProductFormSheet> {
     });
   }
 
-  // ─── Stok ─────────────────────────────────────────────────────────────────
-
-  // "Tambah per kemasan": mis. barang datang 13 Dus -> stok + 13 x isi.
   Future<void> _addStockByUnit() async {
     final added = await AppBottomSheet.show<int>(
       context,
@@ -124,8 +106,6 @@ class _ProductFormSheetState extends State<ProductFormSheet> {
       if (_isEdit) _reason ??= StockAdjustReason.incoming;
     });
   }
-
-  // ─── Simpan ───────────────────────────────────────────────────────────────
 
   void _handleSave() {
     final formValid = _formKey.currentState!.validate();
@@ -170,15 +150,12 @@ class _ProductFormSheetState extends State<ProductFormSheet> {
 
   @override
   Widget build(BuildContext context) {
-    // Kasir boleh ubah barang tapi cuma nama & stok — field lain disembunyikan
-    // (nilainya tetap dari data lama saat disimpan) dan tampil sebagai info.
     final isAdmin = context.read<AuthCubit>().state.user?.isAdmin ?? false;
     final limitedEdit = _isEdit && !isAdmin;
 
     return BlocListener<ProductCubit, ProductState>(
       listener: (context, state) {
-        // Abaikan kalau sheet ini sudah bukan route teratas (mis. masih
-        // animasi tutup) supaya tidak pop/toast dobel.
+        // skip kalau sheet ini udah bukan route teratas, biar ga pop/toast dobel
         if (!(ModalRoute.of(context)?.isCurrent ?? false)) return;
 
         if (state.status == ProductStatus.addSuccess) {
@@ -217,7 +194,6 @@ class _ProductFormSheetState extends State<ProductFormSheet> {
     );
   }
 
-  // Kasir: nama & stok saja, sisanya info read-only.
   List<Widget> _buildLimitedFields() {
     final p = widget.existing!;
     return [
@@ -444,8 +420,6 @@ class _ProductFormSheetState extends State<ProductFormSheet> {
     );
   }
 
-  // Barang "sementara" dari isian form, untuk rincian stok per kemasan saat
-  // tambah barang.
   ProductModel get _previewProduct => ProductModel(
     id: '',
     sku: '',
@@ -460,7 +434,6 @@ class _ProductFormSheetState extends State<ProductFormSheet> {
     minStock: 0,
   );
 
-  // Alasan perubahan stok — muncul begitu angka stok diubah saat Ubah Barang.
   Widget _buildReasonSection() {
     final old = widget.existing!.stock;
     final diff = _stock - old;
@@ -526,11 +499,6 @@ class _ProductFormSheetState extends State<ProductFormSheet> {
     );
   }
 }
-
-// ─── _AddStockSheet ─────────────────────────────────────────────────────────
-//
-// Tambah stok per satuan: pilih satuan (dasar / kemasan) + jumlah, hasilnya
-// dikembalikan dalam satuan dasar (jumlah x isi kemasan).
 
 class _AddStockSheet extends StatefulWidget {
   final String baseUnit;

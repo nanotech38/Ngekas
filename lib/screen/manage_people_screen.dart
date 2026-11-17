@@ -14,13 +14,6 @@ import 'package:ngekas/widget/app_dialog.dart';
 import 'package:ngekas/widget/app_text_field.dart';
 import 'package:ngekas/widget/app_toast.dart';
 
-// ─── ManagePeopleScreen ─────────────────────────────────────────────────────
-//
-// "Kelola Pengguna" di ProfileScreen — admin-only (menu-nya sudah
-// disembunyikan dari kasir). Tidak ada pendaftaran mandiri: akun kasir baru
-// dibuat admin lewat tombol "Tambah Kasir" di sini. Juga menampilkan daftar
-// akun terdaftar dan tombol keluarkan akun kasir.
-
 class ManagePeopleScreen extends StatelessWidget {
   const ManagePeopleScreen({super.key});
 
@@ -50,8 +43,6 @@ class ManagePeopleScreen extends StatelessWidget {
                 );
               }
 
-              // Admin selalu di atas, sisanya diurutkan by username supaya
-              // urutannya stabil tiap kali list berubah.
               final sorted = [...snapshot.data!]
                 ..sort((a, b) {
                   if (a.role != b.role) return a.isAdmin ? -1 : 1;
@@ -169,11 +160,6 @@ class ManagePeopleScreen extends StatelessWidget {
     }
   }
 }
-
-// ─── _AddKasirSheet ─────────────────────────────────────────────────────────
-//
-// Form admin untuk membuat akun kasir baru: nama, username, kata sandi.
-// Setelah dibuat, kasir langsung bisa login pakai username & kata sandi itu.
 
 class _AddKasirSheet extends StatefulWidget {
   const _AddKasirSheet();

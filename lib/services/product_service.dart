@@ -6,16 +6,6 @@ import 'package:ngekas/models/stock_movement_model.dart';
 import 'package:ngekas/services/database_service.dart';
 import 'package:ngekas/services/stock_movement_service.dart';
 
-// ─── ProductService ─────────────────────────────────────────────────────────
-//
-// CRUD barang di DatabaseService.products (in-memory). Satu barang boleh
-// punya banyak barcode (satuan dasar + kemasan), tapi satu barcode hanya
-// boleh dimiliki satu barang. Kode internal dibuat otomatis saat barang
-// ditambahkan dan tidak berubah lagi — barang tanpa barcode tetap bisa
-// dicari. Stok bisa diubah lewat form (penyesuaian, wajib alasan); perubahan
-// stok lewat transaksi ditangani TransactionService. Semua perubahan stok
-// tercatat di kartu stok (StockMovementService).
-
 class ProductService {
   ProductService._();
 
@@ -31,17 +21,12 @@ class ProductService {
     );
   }
 
-  // Barang pemilik barcode ini — satuan dasar maupun kemasan (dipakai cek
-  // duplikat).
   static ProductModel? findByBarcode(String barcode, {String? exceptId}) {
     final code = barcode.trim();
     if (code.isEmpty) return null;
     return _db.products.rows.where((p) => p.id != exceptId && p.allBarcodes.contains(code)).firstOrNull;
   }
 
-  // Cari barang + satuannya dari hasil scan: cocokkan semua barcode (satuan
-  // dasar & kemasan) dulu, lalu kode internal (mis. OLP-121) supaya barang
-  // tanpa barcode tetap bisa dicari.
   static ProductUnitMatch? findByCode(String code) {
     final value = code.trim();
     if (value.isEmpty) return null;
@@ -78,8 +63,6 @@ class ProductService {
     );
   }
 
-  // Tambah barang tanpa jeda simulasi — dipakai `add` dan import massal.
-  // Stok awal langsung tercatat di kartu stok.
   static ProductModel insertNow({
     List<String> barcodes = const [],
     List<ProductPack> packs = const [],
@@ -116,9 +99,7 @@ class ProductService {
     return product;
   }
 
-  // Ubah barang. Kalau stoknya berubah, `stockReason` WAJIB diisi (lihat
-  // StockAdjustReason) — perubahannya tercatat di kartu stok sebagai
-  // penyesuaian beserta catatannya.
+  // stockReason wajib diisi kalau stoknya berubah
   static Future<ProductModel> update({
     required String id,
     List<String> barcodes = const [],
@@ -167,9 +148,6 @@ class ProductService {
     return updated;
   }
 
-  // Hubungkan barcode yang belum terdaftar ke barang yang sudah ada — sebagai
-  // barcode satuan dasar (`packName` null), kemasan yang sudah ada, atau
-  // kemasan baru (`packName` baru + `packFactor`).
   static Future<ProductUnitMatch> linkBarcode({
     required String productId,
     required String barcode,
@@ -208,10 +186,8 @@ class ProductService {
     AppLog.i(tag, 'delete: $id');
   }
 
-  // Kode barang = "<huruf>-<angka>", mis. MNM-121. Huruf diambil dari nama
-  // kategori (lihat codePrefix), angka diacak 3 digit. Kalau hasilnya sudah
-  // dipakai barang lain, diacak ulang (re-roll). Kalau semua angka 3 digit
-  // untuk prefiks itu sudah habis, naik ke 4 digit, dst.
+  // format: PREFIX-123. angka diacak ulang kalau bentrok,
+  // kalau 3 digit udah habis naik ke 4 digit
   static String generateCode(String categoryName, {required Set<String> existingCodes, Random? random}) {
     final rng = random ?? _random;
     final prefix = codePrefix(categoryName);
@@ -238,9 +214,7 @@ class ProductService {
     }
   }
 
-  // 3 huruf dari nama kategori: huruf pertama + konsonan berikutnya
-  // (Minuman -> MNM, Sembako -> SMB). Kalau konsonannya kurang, ditambah
-  // huruf lain / "X".
+  // Minuman -> MNM, Sembako -> SMB
   static String codePrefix(String categoryName) {
     final letters = categoryName.toUpperCase().replaceAll(RegExp('[^A-Z]'), '');
     if (letters.isEmpty) return 'BRG';
@@ -264,8 +238,6 @@ class ProductService {
   static List<String> _clean(List<String> barcodes) =>
       {for (final b in barcodes) if (b.trim().isNotEmpty) b.trim()}.toList();
 
-  // Barcode harus unik: tidak dobel di barang ini sendiri, dan tidak dipakai
-  // barang lain.
   static void _ensureUniqueBarcodes(List<String> barcodes, {String? exceptId}) {
     final seen = <String>{};
     for (final code in barcodes) {

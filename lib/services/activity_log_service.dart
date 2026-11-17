@@ -3,12 +3,7 @@ import 'package:ngekas/models/app_user.dart';
 import 'package:ngekas/services/auth_service.dart';
 import 'package:ngekas/services/database_service.dart';
 
-// ─── ActivityLogService ─────────────────────────────────────────────────────
-//
-// Riwayat Aktivitas in-memory. Pelakunya otomatis diambil dari user yang
-// sedang login. `log()` sengaja tidak pernah melempar exception — gagal
-// mencatat log tidak boleh menggagalkan aksi utama yang sudah sukses.
-
+// log() jangan sampai throw, gagal nyatet log ga boleh ngegagalin aksi utamanya
 class ActivityLogService {
   ActivityLogService._();
 

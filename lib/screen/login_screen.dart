@@ -69,7 +69,6 @@ class _LoginScreenState extends State<LoginScreen>
     );
   }
 
-  // Isi otomatis form dengan akun demo (tap di kotak info akun demo).
   void _fillDemoAccount(String username) {
     setState(() {
       _usernameController.text = username;

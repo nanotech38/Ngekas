@@ -1,38 +1,30 @@
 import 'package:flutter/material.dart';
 
-// ─── Colors ───────────────────────────────────────────────────────────────────
-
 class AppColors {
   AppColors._();
 
-  // Primary — Orange
   static const Color primary = Color(0xFFEA580C);
   static const Color primaryDark = Color(0xFFC2410C);
   static const Color primaryLight = Color(0xFFFB923C);
   static const Color primaryContainer = Color(0xFFFFEDD5);
 
-  // Secondary — Charcoal (kontras netral untuk orange)
   static const Color secondary = Color(0xFF1E293B);
   static const Color secondaryLight = Color(0xFF475569);
   static const Color secondaryContainer = Color(0xFFE2E8F0);
 
-  // Background & Surface
   static const Color background = Color(0xFFFFFAF5);
   static const Color surface = Color(0xFFFFFFFF);
   static const Color surfaceVariant = Color(0xFFFFF4EB);
 
-  // Border
   static const Color border = Color(0xFFF1E6DC);
   static const Color borderFocus = primary;
 
-  // Text
   static const Color textPrimary = Color(0xFF1E293B);
   static const Color textSecondary = Color(0xFF334155);
   static const Color textMuted = Color(0xFF64748B);
   static const Color textHint = Color(0xFFCBD5E1);
   static const Color textDisabled = Color(0xFF94A3B8);
 
-  // Status
   static const Color success = Color(0xFF16A34A);
   static const Color successLight = Color(0xFFDCFCE7);
   static const Color warning = Color(0xFFF59E0B);
@@ -42,21 +34,17 @@ class AppColors {
   static const Color info = Color(0xFF0EA5E9);
   static const Color infoLight = Color(0xFFE0F2FE);
 
-  // Income & Expense — khusus catatan pemasukan & pengeluaran
   static const Color income = Color(0xFF16A34A);
   static const Color incomeBackground = Color(0xFFDCFCE7);
   static const Color expense = Color(0xFFEF4444);
   static const Color expenseBackground = Color(0xFFFEE2E2);
 
-  // Neutral
   static const Color white = Color(0xFFFFFFFF);
   static const Color black = Color(0xFF000000);
   static const Color transparent = Colors.transparent;
   static const Color divider = Color(0xFFF1E6DC);
   static const Color overlay = Color(0x80000000);
 }
-
-// ─── Font Sizes ───────────────────────────────────────────────────────────────
 
 class AppFontSize {
   AppFontSize._();
@@ -75,8 +63,6 @@ class AppFontSize {
   static const double xl7 = 32.0;
 }
 
-// ─── Font Weights ─────────────────────────────────────────────────────────────
-
 class AppFontWeight {
   AppFontWeight._();
 
@@ -87,12 +73,9 @@ class AppFontWeight {
   static const FontWeight extraBold = FontWeight.w800;
 }
 
-// ─── Text Styles ──────────────────────────────────────────────────────────────
-
 class AppTextStyle {
   AppTextStyle._();
 
-  // Heading
   static const TextStyle h1 = TextStyle(
     fontSize: AppFontSize.xl7,
     fontWeight: AppFontWeight.bold,
@@ -117,7 +100,6 @@ class AppTextStyle {
     color: AppColors.textPrimary,
   );
 
-  // Title
   static const TextStyle titleLg = TextStyle(
     fontSize: AppFontSize.xl2,
     fontWeight: AppFontWeight.semiBold,
@@ -134,7 +116,6 @@ class AppTextStyle {
     color: AppColors.textPrimary,
   );
 
-  // Body
   static const TextStyle bodyLg = TextStyle(
     fontSize: AppFontSize.lg,
     fontWeight: AppFontWeight.regular,
@@ -151,7 +132,6 @@ class AppTextStyle {
     color: AppColors.textMuted,
   );
 
-  // Label
   static const TextStyle labelLg = TextStyle(
     fontSize: AppFontSize.base,
     fontWeight: AppFontWeight.semiBold,
@@ -171,7 +151,6 @@ class AppTextStyle {
     letterSpacing: 0.3,
   );
 
-  // Currency — khusus angka nominal
   static const TextStyle currencyLg = TextStyle(
     fontSize: AppFontSize.xl5,
     fontWeight: AppFontWeight.bold,

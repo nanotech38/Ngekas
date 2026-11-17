@@ -2,7 +2,6 @@ import 'package:ngekas/const/app_log_const.dart';
 import 'package:ngekas/models/app_user.dart';
 import 'package:ngekas/services/database_service.dart';
 
-// Exception dengan pesan yang sudah siap ditampilkan ke user.
 class AuthException implements Exception {
   final String message;
 
@@ -11,12 +10,6 @@ class AuthException implements Exception {
   @override
   String toString() => message;
 }
-
-// ─── AuthService ────────────────────────────────────────────────────────────
-//
-// Login username/password terhadap akun hardcode di DatabaseService.users.
-// Sesi login hanya disimpan di memori — aplikasi ditutup berarti harus login
-// ulang (sejalan dengan data yang juga reset).
 
 class AuthService {
   AuthService._();

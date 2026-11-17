@@ -6,18 +6,10 @@ import 'package:ngekas/models/product_model.dart';
 import 'package:ngekas/services/product_service.dart';
 import 'package:ngekas/widget/category_dropdown_field.dart';
 
-// ─── ProductDropdownField ───────────────────────────────────────────────────
-//
-// Dropdown pilih barang (searchable nama/kode/barcode) untuk form transaksi. Tiap item
-// menampilkan sisa stok & harga supaya user tidak perlu bolak-balik ke layar
-// Barang. `onChanged` mengembalikan ProductModel penuh (harga dipakai form
-// untuk mengisi harga satuan otomatis).
-
 class ProductDropdownField extends StatefulWidget {
   final String? value;
   final ValueChanged<ProductModel?> onChanged;
   final FormFieldValidator<String>? validator;
-  // true -> tampilkan harga beli (Pembelian Stok), false -> harga jual.
   final bool showBuyPrice;
 
   const ProductDropdownField({

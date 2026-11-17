@@ -2,13 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:ngekas/const/app_theme_const.dart';
 import 'package:ngekas/widget/app_button.dart';
 
-// ─── AppDialog ──────────────────────────────────────────────────────────────
-//
-// Dialog konfirmasi/notifikasi dengan 3 varian visual: sukses, warning/info,
-// error. Dipanggil lewat method statis (AppDialog.showSuccess/showWarning/
-// showError, atau AppDialog.show untuk kontrol penuh), bukan langsung
-// showDialog manual, supaya tampilannya selaras di seluruh halaman.
-
 enum AppDialogType { success, warning, error }
 
 class _DialogVisual {

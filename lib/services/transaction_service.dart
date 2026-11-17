@@ -6,16 +6,6 @@ import 'package:ngekas/services/auth_service.dart';
 import 'package:ngekas/services/database_service.dart';
 import 'package:ngekas/services/stock_movement_service.dart';
 
-// ─── TransactionService ─────────────────────────────────────────────────────
-//
-// CRUD transaksi barang di DatabaseService.transactions (in-memory), sekaligus
-// menjaga stok barang tetap sinkron:
-// - Penjualan mengurangi stok, Pembelian Stok menambah stok.
-// - Ubah transaksi = batalkan efek lama lalu terapkan efek baru.
-// - Hapus transaksi = batalkan efeknya.
-// Semua perubahan stok divalidasi dulu (tidak boleh minus) sebelum diterapkan,
-// jadi kalau gagal tidak ada data yang setengah berubah.
-
 class TransactionService {
   TransactionService._();
 
@@ -74,7 +64,7 @@ class TransactionService {
     if (product == null) throw DataException('Barang tidak ditemukan, mungkin sudah dihapus');
 
     final changes = <String, int>{};
-    // Barang lama yang sudah dihapus tidak perlu dikembalikan stoknya.
+    // barangnya udah dihapus, ga perlu balikin stok
     if (_db.products.find(old.productId) != null) {
       changes[old.productId] = -_stockEffect(old.type, old.quantity);
     }
@@ -117,8 +107,6 @@ class TransactionService {
     AppLog.i(tag, 'delete: $id');
   }
 
-  // Bayar keranjang Kasir: satu transaksi penjualan per barang, semuanya
-  // ditandai nomor nota yang sama. Mengembalikan nomor nota.
   static Future<String> checkout({required List<CartItem> items, required String note}) async {
     await _db.simulateLatency(500);
     if (items.isEmpty) throw DataException('Keranjang masih kosong');
@@ -127,7 +115,7 @@ class TransactionService {
     for (final item in items) {
       changes[item.product.id] = (changes[item.product.id] ?? 0) - item.quantity;
     }
-    // Validasi stok dulu supaya nomor nota tidak terpakai kalau gagal.
+    // validasi dulu biar nomor nota ga kebuang kalau stoknya kurang
     _validateStockChanges(changes);
     final invoiceNo = _db.newInvoiceNo();
     _applyStockChanges(changes, type: StockMovementType.sale, refNo: invoiceNo, note: note.trim());
@@ -165,7 +153,7 @@ class TransactionService {
   static StockMovementType _movementType(TransactionType type) =>
       type == TransactionType.sale ? StockMovementType.sale : StockMovementType.purchase;
 
-  // Validasi semua dulu, baru terapkan; tiap perubahan dicatat di kartu stok.
+  // validasi semua dulu baru apply, biar ga ada stok yg setengah berubah
   static void _applyStockChanges(
     Map<String, int> changes, {
     required StockMovementType type,

@@ -17,25 +17,18 @@ import 'package:ngekas/widget/app_bottom_sheet.dart';
 import 'package:ngekas/widget/app_dialog.dart';
 import 'package:share_plus/share_plus.dart';
 
-// ─── ReportLogic ────────────────────────────────────────────────────────────
-//
-// Menampung proses (bukan tampilan) dari Laporan Penjualan — cuma yang murni
-// "panggil cubit lalu navigasi", sama pola dengan LoginLogic/HomeLogic.
-
 class ReportLogic {
   ReportLogic._();
 
   static const tag = 'ReportLogic';
 
-  // Chip "Pilih Tanggal": pilih rentang tanggal sendiri (start–end).
   static Future<void> pickCustomRange(BuildContext context) async {
     AppLog.i(tag, 'pickCustomRange');
     final cubit = context.read<SalesReportCubit>();
     final current = cubit.state.range;
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
-    // Rentang awal tidak boleh melewati hari ini (mis. dari "Bulanan", akhir
-    // bulan masih di depan) — kalau lewat, date picker kena assertion.
+    // date picker assert kalau rentangnya lewat hari ini (mis. dari mode Bulanan)
     final end = current.end.isAfter(today) ? today : current.end;
     final start = current.start.isAfter(end) ? end : current.start;
     final picked = await showDateRangePicker(
@@ -49,21 +42,17 @@ class ReportLogic {
     if (picked != null) cubit.setCustomRange(picked.start, picked.end);
   }
 
-  // Tombol filter di AppBar: filter kategori & kasir.
   static void openFilterSheet(BuildContext context) {
     AppLog.i(tag, 'openFilterSheet');
     final cubit = context.read<SalesReportCubit>();
     AppBottomSheet.show(context, builder: (_) => BlocProvider.value(value: cubit, child: const ReportFilterSheet()));
   }
 
-  // Ketuk kartu nota: detail nota dalam bentuk struk + tombol bagikan.
   static void openInvoiceDetail(BuildContext context, SalesInvoice invoice) {
     AppLog.i(tag, 'openInvoiceDetail: ${invoice.key}');
     AppBottomSheet.show(context, builder: (_) => InvoiceDetailSheet(invoice: invoice));
   }
 
-  // Tombol "Bagikan Struk": render widget struk (RepaintBoundary) jadi PNG
-  // lalu buka share sheet bawaan HP (WhatsApp, dll).
   static Future<void> shareReceipt(BuildContext context, GlobalKey receiptKey, SalesInvoice invoice) async {
     AppLog.i(tag, 'shareReceipt: ${invoice.key}');
     try {
@@ -84,8 +73,7 @@ class ReportLogic {
       );
     } catch (e, st) {
       AppLog.e(tag, 'shareReceipt: error', error: e, stackTrace: st);
-      // MissingPluginException = plugin native belum ter-install (biasanya
-      // habis hot reload setelah tambah package) — perlu build ulang penuh.
+      // biasanya habis hot reload setelah nambah package, perlu full rebuild
       final message = e is MissingPluginException
           ? 'Fitur bagikan belum siap. Tutup aplikasi lalu jalankan ulang (bukan hot reload).'
           : e.toString();
@@ -93,7 +81,6 @@ class ReportLogic {
     }
   }
 
-  // Ikon PDF di AppBar: export sesuai periode & filter yang sedang aktif.
   static void exportPdf(BuildContext context) {
     AppLog.i(tag, 'exportPdf');
     final state = context.read<SalesReportCubit>().state;
@@ -116,7 +103,6 @@ class ReportLogic {
     );
   }
 
-  // Nama kategori untuk chip filter aktif.
   static String? categoryName(String? categoryId) =>
       categoryId == null ? null : DatabaseService.instance.categories.find(categoryId)?.name;
 }

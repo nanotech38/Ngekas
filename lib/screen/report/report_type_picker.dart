@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:ngekas/const/app_theme_const.dart';
 
-// Kartu pilihan menu laporan (ikon + judul + keterangan) — dipakai LaporanTab.
 class ReportTypeOption extends StatelessWidget {
   final IconData icon;
   final Color color;

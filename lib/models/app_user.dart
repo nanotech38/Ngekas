@@ -1,14 +1,3 @@
-// ─── AppUser ────────────────────────────────────────────────────────────────
-//
-// Profil user yang sedang login. Data akun (termasuk password) disimpan di
-// DatabaseService (in-memory, hardcode) — AppUser sendiri sengaja tidak
-// membawa password supaya aman dioper ke layar mana pun.
-//
-// Dua role:
-// - admin -> akses penuh (barang, kategori, stok masuk, hapus transaksi,
-//   kelola pengguna).
-// - kasir -> fokus ke transaksi penjualan (Kasir) & melihat stok.
-
 enum UserRole { admin, kasir }
 
 extension UserRoleLabel on UserRole {

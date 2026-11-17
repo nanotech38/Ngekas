@@ -17,12 +17,6 @@ import 'package:ngekas/widget/app_bottom_sheet.dart';
 import 'package:ngekas/widget/app_dialog.dart';
 import 'package:ngekas/widget/app_toast.dart';
 
-// ─── ProductScreen ──────────────────────────────────────────────────────────
-//
-// Tab "Gudang" — daftar stok barang dengan pencarian (nama/kode/barcode) dan
-// filter kategori. Admin & kasir bisa tambah barang dan ubah (ketuk kartu —
-// kasir hanya nama & stok); hapus (ikon tempat sampah) khusus admin.
-
 class ProductScreen extends StatelessWidget {
   const ProductScreen({super.key});
 
@@ -88,8 +82,6 @@ class _ProductView extends StatelessWidget {
                 icon: const Icon(Icons.upload_file_rounded),
                 onPressed: () => NavigationService.get().push(const ProductImportScreen()),
               ),
-            // Admin & kasir sama-sama bisa tambah barang (tercatat di Riwayat
-            // Aktivitas).
             IconButton(
               tooltip: 'Tambah Barang',
               icon: const Icon(Icons.add_box_outlined),
@@ -210,22 +202,11 @@ class _ProductView extends StatelessWidget {
     return _ProductCard(
       product: p,
       isAdmin: isAdmin,
-      // Admin ubah semua data; kasir cuma nama & stok (dibatasi di form).
       onTap: () => _openForm(context, existing: p),
       onDelete: () => _confirmDelete(context, p),
     );
   }
 }
-
-// ─── _ProductCard ───────────────────────────────────────────────────────────
-//
-// Kartu satu barang:
-// - Atas  : avatar inisial (warna per kategori), nama, chip kategori,
-//           ringkasan barcode, kemasan (mis. Dus isi 12), ikon hapus (admin).
-// - Bawah : harga jual, tombol Kartu Stok, dan jumlah stok berwarna (hijau /
-//           kuning menipis / merah habis) + rinciannya per kemasan.
-// Barang habis diberi garis kiri merah & sedikit diredupkan supaya cepat
-// kelihatan saat scroll.
 
 class _ProductCard extends StatelessWidget {
   final ProductModel product;
@@ -235,7 +216,6 @@ class _ProductCard extends StatelessWidget {
 
   const _ProductCard({required this.product, required this.isAdmin, required this.onTap, required this.onDelete});
 
-  // Warna avatar per kategori — dipilih stabil dari id kategori.
   static const _palette = [
     (AppColors.primary, AppColors.primaryContainer),
     (AppColors.info, AppColors.infoLight),
@@ -257,14 +237,12 @@ class _ProductCard extends StatelessWidget {
     return (words[0][0] + words[1][0]).toUpperCase();
   }
 
-  // "8997011930011 +2 barcode lain" / "Tanpa barcode".
   String get _barcodeSummary {
     final all = product.allBarcodes.toList();
     if (all.isEmpty) return 'Tanpa barcode';
     return all.length == 1 ? all.first : '${all.first} +${all.length - 1} barcode lain';
   }
 
-  // Warna stok: merah = habis, kuning = menipis, hijau = cukup.
   ({Color color, Color background}) get _stockStatus {
     if (product.isOutOfStock) return (color: AppColors.error, background: AppColors.errorLight);
     if (product.isLowStock) return (color: const Color(0xFFB45309), background: AppColors.warningLight);
@@ -295,7 +273,6 @@ class _ProductCard extends StatelessWidget {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // Garis status stok di sisi kiri.
                   Container(width: 4, color: stock.color),
                   Expanded(
                     child: Padding(
@@ -333,7 +310,6 @@ class _ProductCard extends StatelessWidget {
                                       runSpacing: 4,
                                       crossAxisAlignment: WrapCrossAlignment.center,
                                       children: [
-                                        // Kode barang sengaja tidak ditampilkan.
                                         Container(
                                           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                           decoration: BoxDecoration(
@@ -404,9 +380,6 @@ class _ProductCard extends StatelessWidget {
                           const SizedBox(height: 10),
                           Padding(
                             padding: const EdgeInsets.only(right: 8),
-                            // Tombol Kartu Stok & kotak stok dibuat sama tinggi
-                            // (stretch) supaya sejajar, walau kotak stok punya
-                            // baris rincian kemasan.
                             child: IntrinsicHeight(
                               child: Row(
                                 crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -425,7 +398,6 @@ class _ProductCard extends StatelessWidget {
                                       ],
                                     ),
                                   ),
-                                  // Kartu stok: riwayat masuk/keluar/penyesuaian barang ini.
                                   OutlinedButton.icon(
                                     onPressed: () => NavigationService.get().push(StockCardScreen(product: p)),
                                     icon: const Icon(Icons.history_rounded, size: 16),

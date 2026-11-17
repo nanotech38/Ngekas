@@ -5,14 +5,6 @@ import 'package:ngekas/const/app_theme_const.dart';
 import 'package:ngekas/logic/report_logic.dart';
 import 'package:ngekas/models/sales_report.dart';
 
-// ─── InvoiceCard ────────────────────────────────────────────────────────────
-//
-// Kartu satu nota penjualan (nomor nota, waktu, kasir, ringkasan barang,
-// total). Ketuk = buka struk (InvoiceDetailSheet). Dipakai di Laporan
-// Penjualan dan "Transaksi Terbaru" di Beranda.
-// `showDate`: tampilkan tanggal + jam (Beranda); false = jam saja karena
-// Laporan sudah dikelompokkan per tanggal.
-
 class InvoiceCard extends StatelessWidget {
   final SalesInvoice invoice;
   final bool showDate;

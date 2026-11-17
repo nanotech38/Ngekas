@@ -12,9 +12,6 @@ import 'package:ngekas/screen/product/product_screen.dart';
 import 'package:ngekas/services/database_service.dart';
 import 'package:ngekas/services/navigation_services.dart';
 
-// Smoke test: render layar-layar utama di ukuran HP untuk menangkap error
-// layout (overflow, dsb) untuk kedua role.
-
 void main() {
   Future<AuthCubit> pumpHome(WidgetTester tester, String username) async {
     tester.view.physicalSize = const Size(1080, 2340);
@@ -43,28 +40,23 @@ void main() {
     testWidgets('semua tab & kasir tampil tanpa error ($username)', (tester) async {
       await pumpHome(tester, username);
 
-      // Beranda: total penjualan hari ini + barang paling laku (data awal:
-      // hari ini terjual Oli Mesin Matic x3 & Busi Motor Standar x2).
+      // data seed: hari ini kejual oli x3 + busi x2
       expect(find.text('Total Penjualan · ${AppDate.format(DateTime.now())}'), findsOneWidget);
       expect(find.text('Barang Paling Laku'), findsOneWidget);
       expect(find.text('3 terjual'), findsOneWidget);
 
-      // Toggle ke Bulanan.
       await tester.tap(find.text('Bulanan'));
       await tester.pumpAndSettle();
       expect(find.text('Total Penjualan · ${AppDate.monthYear(DateTime.now())}'), findsOneWidget);
 
-      // Tombol "Gudang" di Beranda pindah ke tab Gudang.
       await tester.tap(find.descendant(of: find.byType(HomeTab), matching: find.text('Gudang')));
       await tester.pumpAndSettle();
       expect(find.text('8997011930011'), findsOneWidget);
 
-      // Barang tanpa barcode ditandai "Tanpa barcode".
       await tester.enterText(find.byType(TextField).first, 'Ban Dalam');
       await tester.pumpAndSettle();
       expect(find.text('Tanpa barcode'), findsOneWidget);
 
-      // Cari pakai barcode -> hanya barang itu yang tampil.
       await tester.enterText(find.byType(TextField).first, '8997011930011');
       await tester.pumpAndSettle();
       expect(find.descendant(of: find.byType(ProductScreen), matching: find.text('Oli Mesin Matic 0.8L')), findsOneWidget);
@@ -81,7 +73,6 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.byType(CashierScreen), findsOneWidget);
 
-      // Pilih Manual -> pilih barang -> isi jumlah -> masuk keranjang.
       await tester.tap(find.text('Pilih Manual'));
       await tester.pumpAndSettle();
       await tester.tap(find.descendant(of: find.byType(ProductPickerSheet), matching: find.text('Oli Mesin Matic 0.8L')));

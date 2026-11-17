@@ -6,17 +6,9 @@ import 'package:ngekas/logic/report_logic.dart';
 import 'package:ngekas/models/sales_report.dart';
 import 'package:ngekas/services/database_service.dart';
 
-// ─── InvoiceDetailSheet ─────────────────────────────────────────────────────
-//
-// Detail satu nota penjualan dalam bentuk struk. Bagian struk dibungkus
-// RepaintBoundary supaya bisa dirender jadi gambar dan dibagikan.
-
 class InvoiceDetailSheet extends StatefulWidget {
   final SalesInvoice invoice;
 
-  // Diisi dari Kasir setelah transaksi disimpan: struk ikut menampilkan uang
-  // diterima & kembalian, ada banner "Transaksi Tercatat" dan tombol
-  // "Selesai".
   final int? cash;
   final bool justSaved;
 
@@ -61,7 +53,6 @@ class _InvoiceDetailSheetState extends State<InvoiceDetailSheet> {
           ),
           const SizedBox(height: 12),
         ],
-        // AppBottomSheet sudah scrollable, jadi struk panjang tetap aman.
         Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
@@ -94,8 +85,6 @@ class _InvoiceDetailSheetState extends State<InvoiceDetailSheet> {
           const SizedBox(height: 10),
           SizedBox(
             height: 48,
-            // Kasir yang membuka sheet ini lanjut kembali ke Beranda setelah
-            // sheet ditutup.
             child: ElevatedButton.icon(
               onPressed: () => Navigator.of(context).pop(),
               icon: const Icon(Icons.check_rounded, size: 18),
@@ -108,8 +97,7 @@ class _InvoiceDetailSheetState extends State<InvoiceDetailSheet> {
   }
 }
 
-// Tampilan struk — ini yang jadi gambar saat dibagikan, jadi latarnya putih
-// solid dan tidak bergantung warna sheet.
+// ini yg dirender jadi gambar pas share, makanya latarnya putih solid
 class _Receipt extends StatelessWidget {
   final SalesInvoice invoice;
   final int? cash;

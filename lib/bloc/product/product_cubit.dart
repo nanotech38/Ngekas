@@ -8,7 +8,6 @@ import 'package:ngekas/models/product_model.dart';
 import 'package:ngekas/services/activity_log_service.dart';
 import 'package:ngekas/services/product_service.dart';
 
-// Filter list barang: teks pencarian (nama/kode/barcode) dan kategori.
 class ProductFilter {
   final String query;
   final String? categoryId;
@@ -42,8 +41,6 @@ class ProductState {
   final ProductFilter filter;
   final bool isSubmitting;
   final String errorMessage;
-  // Barang yang terakhir berhasil ditambah — dipakai form untuk menampilkan
-  // kode internal yang baru dibuat setelah addSuccess.
   final ProductModel? lastAdded;
 
   ProductState({
@@ -89,11 +86,6 @@ class ProductState {
     }).toList();
   }
 }
-
-// ─── ProductCubit ───────────────────────────────────────────────────────────
-//
-// Scoped per ProductScreen; dipakai bareng oleh list & form sheet barang.
-// Pola status per-aksi sama dengan CategoryCubit.
 
 class ProductCubit extends Cubit<ProductState> {
   static const tag = 'ProductCubit';
@@ -240,7 +232,6 @@ class ProductCubit extends Cubit<ProductState> {
     }
   }
 
-  // Rincian ubah barang: hanya field yang berubah, sebagai baris lama -> baru.
   List<ActivityDetail> _changes(ProductModel? old, ProductModel now) {
     if (old == null) return [ActivityDetail('Stok', '${now.stock} ${now.unit}')];
     String price(int value) => value > 0 ? AppCurrency.format(value) : '-';
@@ -267,7 +258,6 @@ class ProductCubit extends Cubit<ProductState> {
 
   static String _barcodesText(List<String> barcodes) => barcodes.isEmpty ? '-' : barcodes.join(', ');
 
-  // "134 bungkus (13 Dus + 4 bungkus)".
   static String _stockText(ProductModel p, int qty) {
     final breakdown = p.packBreakdown(qty);
     return breakdown.isEmpty ? '$qty ${p.unit}' : '$qty ${p.unit} ($breakdown)';

@@ -10,18 +10,8 @@ import 'package:ngekas/widget/app_bottom_sheet.dart';
 import 'package:ngekas/widget/app_button.dart';
 import 'package:ngekas/widget/app_dialog.dart';
 
-// ─── LinkBarcodeSheet ───────────────────────────────────────────────────────
-//
-// Barcode hasil scan belum terdaftar -> hubungkan ke barang yang sudah ada,
-// sebagai barcode satuan dasar, kemasan yang sudah ada, atau kemasan baru
-// (mis. dus dari distributor lain). Setelah itu scan berikutnya langsung
-// dikenali. Tercatat di Riwayat Aktivitas. Mengembalikan ProductUnitMatch
-// (barang + satuannya) supaya pemanggil bisa langsung lanjut, mis. ke isi
-// jumlah di Kasir.
-
 class LinkBarcodeSheet extends StatefulWidget {
   final String barcode;
-  // Asal penghubungan untuk catatan aktivitas, mis. "Kasir".
   final String source;
 
   const LinkBarcodeSheet({super.key, required this.barcode, required this.source});
@@ -37,7 +27,6 @@ class LinkBarcodeSheet extends StatefulWidget {
   State<LinkBarcodeSheet> createState() => _LinkBarcodeSheetState();
 }
 
-// Pilihan satuan: satuan dasar, kemasan yang ada, atau kemasan baru.
 enum _Target { base, pack, newPack }
 
 class _LinkBarcodeSheetState extends State<LinkBarcodeSheet> {

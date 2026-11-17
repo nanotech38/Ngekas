@@ -6,20 +6,10 @@ import 'package:ngekas/services/product_service.dart';
 import 'package:ngekas/widget/app_dialog.dart';
 import 'package:ngekas/widget/app_toast.dart';
 
-// ─── BarcodeListEditor ──────────────────────────────────────────────────────
-//
-// Daftar barcode yang bisa ditambah (scan kamera / ketik) dan dihapus —
-// dipakai untuk barcode satuan dasar barang dan barcode tiap kemasan.
-// Menolak barcode yang sudah ada di form ini (`takenInForm`) atau sudah
-// dipakai barang lain.
-
 class BarcodeListEditor extends StatefulWidget {
   final List<String> barcodes;
   final ValueChanged<List<String>> onChanged;
-  // Barang yang sedang diubah (barcode miliknya sendiri tidak dianggap
-  // duplikat). Null saat tambah barang baru.
   final String? productId;
-  // Barcode lain di form yang sama (mis. barcode kemasan) supaya tidak dobel.
   final Set<String> takenInForm;
   final String emptyText;
 

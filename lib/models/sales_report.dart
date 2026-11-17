@@ -2,8 +2,6 @@ import 'package:ngekas/const/app_date_const.dart';
 import 'package:ngekas/models/product_model.dart';
 import 'package:ngekas/models/transaction_model.dart';
 
-// ─── Periode laporan ────────────────────────────────────────────────────────
-
 enum ReportPeriod { daily, monthly, custom }
 
 extension ReportPeriodLabel on ReportPeriod {
@@ -14,8 +12,6 @@ extension ReportPeriodLabel on ReportPeriod {
   };
 }
 
-// Rentang tanggal laporan (inklusif per hari), lengkap dengan label tanggal
-// pasti untuk layar & PDF.
 class ReportRange {
   final ReportPeriod period;
   final DateTime start;
@@ -56,9 +52,6 @@ class ReportRange {
   };
 }
 
-// ─── Hasil laporan ──────────────────────────────────────────────────────────
-
-// Satu nota penjualan = beberapa baris transaksi dengan nomor nota yang sama.
 class SalesInvoice {
   final String key;
   final String invoiceNo;
@@ -110,9 +103,6 @@ class SalesSummary {
   final int revenue;
   final int invoiceCount;
   final int quantity;
-  // Laba kotor = (harga jual - harga beli) × jumlah, hanya untuk barang yang
-  // harga belinya diisi. `profitComplete` false kalau ada barang tanpa harga
-  // beli (labanya jadi tidak lengkap).
   final int grossProfit;
   final bool hasProfitData;
   final bool profitComplete;
@@ -129,12 +119,6 @@ class SalesSummary {
   int get averagePerInvoice => invoiceCount == 0 ? 0 : (revenue / invoiceCount).round();
 }
 
-// ─── SalesReport ────────────────────────────────────────────────────────────
-//
-// Mengolah baris transaksi penjualan (yang sudah difilter) jadi: daftar nota,
-// nota dikelompokkan per tanggal, rekap per barang, dan ringkasan. Dipakai
-// bareng oleh layar Laporan Penjualan & export PDF supaya angkanya sama.
-
 class SalesReport {
   final List<SalesInvoice> invoices;
   final List<SalesDayGroup> days;
@@ -144,7 +128,6 @@ class SalesReport {
   const SalesReport._({required this.invoices, required this.days, required this.products, required this.summary});
 
   factory SalesReport.build(List<TransactionModel> lines, Map<String, ProductModel> productsById) {
-    // Nota
     final byKey = <String, List<TransactionModel>>{};
     for (final t in lines) {
       byKey.putIfAbsent(t.invoiceKey, () => []).add(t);
@@ -160,14 +143,11 @@ class SalesReport {
         lines: e.value,
       );
     }).toList()
-      // Terbaru dulu; kalau jamnya sama persis, nomor nota yang lebih besar
-      // (dibuat belakangan) di atas.
       ..sort((a, b) {
         final byDate = b.date.compareTo(a.date);
         return byDate != 0 ? byDate : b.invoiceNo.compareTo(a.invoiceNo);
       });
 
-    // Per tanggal (urutan nota di dalamnya ikut terbaru dulu)
     final byDay = <DateTime, List<SalesInvoice>>{};
     for (final invoice in invoices) {
       final day = DateTime(invoice.date.year, invoice.date.month, invoice.date.day);
@@ -176,7 +156,6 @@ class SalesReport {
     final days = byDay.entries.map((e) => SalesDayGroup(day: e.key, invoices: e.value)).toList()
       ..sort((a, b) => b.day.compareTo(a.day));
 
-    // Per barang
     final recapMap = <String, ProductRecap>{};
     for (final t in lines) {
       final current = recapMap[t.productId];
@@ -194,7 +173,6 @@ class SalesReport {
         return byQuantity != 0 ? byQuantity : b.revenue.compareTo(a.revenue);
       });
 
-    // Ringkasan
     var profit = 0;
     var coveredLines = 0;
     for (final t in lines) {

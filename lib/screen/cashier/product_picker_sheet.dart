@@ -7,22 +7,10 @@ import 'package:ngekas/services/category_service.dart';
 import 'package:ngekas/services/product_service.dart';
 import 'package:ngekas/widget/app_bottom_sheet.dart';
 
-// ─── ProductPickerSheet ─────────────────────────────────────────────────────
-//
-// Langkah 1 (manual) di Kasir: pilih barang dari daftar barang terdaftar.
-// Cari nama/kode/barcode, filter kategori, tiap baris jelas menampilkan
-// harga & sisa stok. Barang yang stoknya habis tidak bisa dipilih.
-// Mengembalikan barang yang dipilih lewat Navigator.pop.
-//
-//   final product = await ProductPickerSheet.show(context, cartQuantities: {...});
-
 class ProductPickerSheet extends StatefulWidget {
-  // productId -> jumlah di keranjang, untuk penanda "Di keranjang: N".
   final Map<String, int> cartQuantities;
   final String title;
   final String subtitle;
-  // True saat memilih barang untuk dihubungkan dengan barcode (stok habis
-  // tetap boleh dipilih).
   final bool allowOutOfStock;
 
   const ProductPickerSheet({

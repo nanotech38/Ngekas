@@ -1,14 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:ngekas/const/app_theme_const.dart';
 
-// ─── AppBottomSheet ─────────────────────────────────────────────────────────
-//
-// Wrapper showModalBottomSheet supaya tampilannya (rounded top, drag handle,
-// padding, SafeArea) konsisten di semua halaman — konten spesifik tiap
-// halaman cukup dikirim lewat parameter `builder`. Dibungkus SafeArea(top:
-// false) supaya konten tidak kepotong system UI (gesture bar/home indicator)
-// di bagian bawah layar.
-
 class AppBottomSheet {
   AppBottomSheet._();
 
@@ -36,11 +28,7 @@ class AppBottomSheet {
             top: 12,
             bottom: MediaQuery.of(context).viewInsets.bottom + 20,
           ),
-          // SingleChildScrollView (bukan cuma Column biasa) supaya waktu
-          // keyboard muncul dan sisa ruang sheet lebih pendek dari isi form,
-          // field yang lagi difokus (mis. Catatan di paling bawah) masih
-          // bisa di-scroll ke atas keyboard, bukan ketutupan tanpa jalan
-          // keluar.
+          // harus scrollable, kalau ga field paling bawah ketutup keyboard
           child: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,

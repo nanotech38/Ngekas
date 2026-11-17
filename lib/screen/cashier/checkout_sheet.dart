@@ -8,13 +8,6 @@ import 'package:ngekas/widget/app_button.dart';
 import 'package:ngekas/widget/app_dialog.dart';
 import 'package:ngekas/widget/app_text_field.dart';
 
-// ─── CheckoutSheet ──────────────────────────────────────────────────────────
-//
-// Bottom sheet pembayaran dari layar Kasir: ubah jumlah per barang, masukkan
-// uang yang dibayar (ada tombol cepat Uang Pas), kembalian
-// dihitung otomatis. Setelah sukses sheet ditutup dan `onPaid` dipanggil
-// supaya CashierScreen menampilkan struk ringkas.
-
 class CheckoutSheet extends StatefulWidget {
   final void Function(String invoiceNo, int total, int cash) onPaid;
 
@@ -60,7 +53,6 @@ class _CheckoutSheetState extends State<CheckoutSheet> {
         } else if (state.status == CashierStatus.checkoutError) {
           AppDialog.showError(context, title: 'Pembayaran Gagal', message: state.errorMessage);
         } else if (state.items.isEmpty && !state.isSubmitting) {
-          // Semua barang dihapus dari keranjang -> tutup sheet.
           Navigator.of(context).pop();
         }
       },

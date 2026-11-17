@@ -7,8 +7,6 @@ import 'package:ngekas/models/product_model.dart';
 import 'package:ngekas/models/stock_movement_model.dart';
 import 'package:ngekas/models/transaction_model.dart';
 
-// Exception umum untuk aksi CRUD in-memory — pesannya sudah siap tampil ke
-// user lewat AppDialog (dipakai bareng oleh semua service).
 class DataException implements Exception {
   final String message;
 
@@ -17,13 +15,6 @@ class DataException implements Exception {
   @override
   String toString() => message;
 }
-
-// ─── MemoryTable ────────────────────────────────────────────────────────────
-//
-// "Tabel" sederhana di memori: list + broadcast stream. `watch()` langsung
-// mengirim isi terkini lalu setiap perubahan berikutnya — perilakunya mirip
-// snapshots() Firestore, jadi StreamBuilder/Cubit yang sudah ada tidak perlu
-// berubah pola.
 
 class MemoryTable<T> {
   MemoryTable(this._idOf);
@@ -68,21 +59,12 @@ class MemoryTable<T> {
   void _notify() => _controller.add(rows);
 }
 
-// Akun login (AppUser + password). Password sengaja dipisah dari AppUser
-// supaya tidak ikut beredar ke layar.
 class UserRecord {
   final AppUser user;
   final String password;
 
   const UserRecord({required this.user, required this.password});
 }
-
-// ─── DatabaseService ────────────────────────────────────────────────────────
-//
-// Pengganti Firebase/SQLite untuk sementara: SEMUA data disimpan di memori
-// dan diisi ulang dengan data hardcode (_seed) setiap aplikasi dibuka.
-// CRUD tetap jalan selama aplikasi hidup, tapi begitu aplikasi ditutup
-// semuanya kembali seperti awal.
 
 class DatabaseService {
   static final DatabaseService _instance = DatabaseService._internal();
@@ -104,19 +86,15 @@ class DatabaseService {
 
   String newId(String prefix) => '$prefix-${++_sequence}';
 
-  // Mis. INV-20261012-004. `date` diisi saat seed data contoh di masa lalu.
   String newInvoiceNo([DateTime? date]) {
     final d = date ?? DateTime.now();
     final ymd = '${d.year}${d.month.toString().padLeft(2, '0')}${d.day.toString().padLeft(2, '0')}';
     return 'INV-$ymd-${(++_invoiceSequence).toString().padLeft(3, '0')}';
   }
 
-  // Jeda kecil biar state loading di UI tetap terasa seperti memanggil
-  // database sungguhan.
+  // delay kecil biar loading state di UI tetap kelihatan
   Future<void> simulateLatency([int milliseconds = 250]) =>
       Future.delayed(Duration(milliseconds: milliseconds));
-
-  // ─── Init ──────────────────────────────────────────────────────────────────
 
   Future<void> init(void Function(String message, double progress) onProgress) async {
     onProgress('Menyiapkan data toko...', 0.2);
@@ -134,13 +112,10 @@ class DatabaseService {
     onProgress('Aplikasi siap!', 1.0);
   }
 
-  // Kembalikan semua data ke kondisi awal (dipakai test).
   void reset() {
     _seed();
     _isReady = true;
   }
-
-  // ─── Seed (data hardcode) ──────────────────────────────────────────────────
 
   void _seed() {
     const admin = AppUser(uid: 'u-admin', username: 'admin', name: 'Admin Toko', role: UserRole.admin);
@@ -191,11 +166,6 @@ class DatabaseService {
       );
     }
 
-    // Kode internal mengikuti format ProductService.generateCode (prefiks
-    // huruf dari kategori + angka acak). Barcode = contoh barcode pabrik:
-    // - Oli punya 2 barcode botol (kemasan lama & baru) + Dus isi 12.
-    // - Busi punya kemasan Box isi 10.
-    // - Ban dalam sengaja tanpa barcode (contoh barang eceran).
     const minStock = ProductModel.defaultMinStock;
     final productRows = [
       product('p-01', 'OLP-121', 'Oli Mesin Matic 0.8L', 'c-oli', 'botol', 42000, 55000, 24, minStock,
@@ -241,7 +211,6 @@ class DatabaseService {
 
     DateTime at(int daysAgo, int hour, int minute) => DateTime(now.year, now.month, now.day - daysAgo, hour, minute);
 
-    // Satu nota penjualan (bisa beberapa barang) dengan nomor nota bersama.
     List<TransactionModel> nota(int daysAgo, int hour, int minute, List<(String, int)> items) {
       final date = at(daysAgo, hour, minute);
       final invoiceNo = newInvoiceNo(date);
@@ -271,9 +240,6 @@ class DatabaseService {
     ];
     transactions.seed(txRows);
 
-    // Kartu stok contoh, konsisten dengan transaksi di atas: stok awal
-    // dihitung mundur dari stok sekarang, lalu tiap transaksi diurutkan
-    // dari yang paling lama dengan saldo berjalan.
     var movementSequence = 0;
     final movementRows = <StockMovementModel>[];
     final ordered = [...txRows]..sort((a, b) => a.date.compareTo(b.date));

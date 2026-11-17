@@ -7,11 +7,6 @@ import 'package:ngekas/screen/report/stock_report_screen.dart';
 import 'package:ngekas/services/navigation_services.dart';
 import 'package:ngekas/template/base_template.dart';
 
-// ─── LaporanTab ─────────────────────────────────────────────────────────────
-//
-// Tab "Laporan" di bottom nav HomeScreen — pintasan ke Laporan Penjualan,
-// Laporan Stok, dan Riwayat Aktivitas.
-
 class LaporanTab extends StatelessWidget {
   const LaporanTab({super.key});
 

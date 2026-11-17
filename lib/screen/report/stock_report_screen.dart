@@ -9,15 +9,6 @@ import 'package:ngekas/services/product_service.dart';
 import 'package:ngekas/services/transaction_service.dart';
 import 'package:ngekas/template/base_template.dart';
 
-// ─── StockReportScreen ──────────────────────────────────────────────────────
-//
-// Laporan Stok: kondisi stok semua barang saat ini.
-// - Ringkasan: jumlah barang, stok habis, stok menipis, tidak laku.
-// - Filter: Semua / Habis / Menipis / Tidak Laku (stok ada tapi tidak
-//   terjual 30 hari terakhir) + cari nama/barcode.
-// - Tiap barang: stok (+ rincian per kemasan), terjual 30 hari, terakhir
-//   terjual. Ketuk = Kartu Stok barang itu.
-
 class StockReportScreen extends StatefulWidget {
   const StockReportScreen({super.key});
 
@@ -36,7 +27,6 @@ extension on _StockFilter {
   };
 }
 
-// Ringkasan penjualan satu barang untuk laporan.
 class _SalesInfo {
   int soldLast30 = 0;
   DateTime? lastSold;
@@ -158,8 +148,6 @@ class _StockReportScreenState extends State<StockReportScreen> {
     );
   }
 
-  // Urutan: habis -> menipis -> sisanya; "Tidak Laku" diurutkan dari yang
-  // paling lama tidak terjual.
   int _compare(ProductModel a, ProductModel b, _SalesInfo ia, _SalesInfo ib) {
     if (_filter == _StockFilter.idle) {
       final da = ia.lastSold ?? DateTime(2000);

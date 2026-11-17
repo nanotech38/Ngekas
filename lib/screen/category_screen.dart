@@ -13,12 +13,6 @@ import 'package:ngekas/widget/app_dialog.dart';
 import 'package:ngekas/widget/app_text_field.dart';
 import 'package:ngekas/widget/app_toast.dart';
 
-// ─── CategoryScreen ─────────────────────────────────────────────────────────
-//
-// "Kategori Barang" — daftar kategori beserta jumlah barang di dalamnya.
-// Tambah: admin & kasir. Ubah/hapus khusus admin; kategori yang masih
-// dipakai barang tidak bisa dihapus (dicek di CategoryService).
-
 class CategoryScreen extends StatelessWidget {
   const CategoryScreen({super.key});
 
@@ -66,7 +60,6 @@ class _CategoryView extends StatelessWidget {
       child: BaseTemplate(
         backgroundColor: AppColors.background,
         appBar: AppBar(title: const Text('Kategori Barang')),
-        // Admin & kasir sama-sama bisa tambah kategori.
         floatingActionButton: FloatingActionButton(
           heroTag: 'category_add_fab',
           tooltip: 'Tambah Kategori',
@@ -203,8 +196,7 @@ class _CategoryFormSheetState extends State<_CategoryFormSheet> {
   Widget build(BuildContext context) {
     return BlocListener<CategoryCubit, CategoryState>(
       listener: (context, state) {
-        // Sheet lama yang masih animasi tutup ikut menerima emit — abaikan
-        // kalau sheet ini bukan lagi route teratas (jangan pop / toast dobel).
+        // sheet lama yg masih animasi nutup ikut dapet emit, skip biar ga pop/toast dobel
         if (!(ModalRoute.of(context)?.isCurrent ?? false)) return;
 
         if (state.status == CategoryStatus.addSuccess) {

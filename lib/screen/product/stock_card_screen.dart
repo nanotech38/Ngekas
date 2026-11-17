@@ -7,13 +7,6 @@ import 'package:ngekas/services/database_service.dart';
 import 'package:ngekas/services/stock_movement_service.dart';
 import 'package:ngekas/template/base_template.dart';
 
-// ─── StockCardScreen ────────────────────────────────────────────────────────
-//
-// Kartu stok satu barang: riwayat stok awal, penjualan, stok masuk &
-// penyesuaian (beserta alasan), lengkap dengan saldo berjalan, siapa & kapan.
-// Terbaru di atas, dikelompokkan per tanggal; bisa difilter Masuk / Keluar /
-// Penyesuaian.
-
 class StockCardScreen extends StatefulWidget {
   final ProductModel product;
 
@@ -52,8 +45,6 @@ class _StockCardScreenState extends State<StockCardScreen> {
       child: StreamBuilder<List<ProductModel>>(
         stream: DatabaseService.instance.products.watch(),
         builder: (context, productSnap) {
-          // Data barang terbaru (stok bisa berubah selama layar terbuka); kalau
-          // barangnya sudah dihapus, pakai data terakhir yang diketahui.
           final product =
               productSnap.data?.where((p) => p.id == widget.product.id).firstOrNull ?? widget.product;
 

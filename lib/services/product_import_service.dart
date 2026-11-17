@@ -6,20 +6,6 @@ import 'package:ngekas/services/activity_log_service.dart';
 import 'package:ngekas/services/database_service.dart';
 import 'package:ngekas/services/product_service.dart';
 
-// ─── ProductImportService ───────────────────────────────────────────────────
-//
-// Import data barang massal dari tabel (hasil SpreadsheetReader). Alurnya:
-// 1. `parse()` — cocokkan kolom dari baris judul, validasi tiap baris, dan
-//    tandai statusnya (siap / dilewati / error) TANPA mengubah data.
-// 2. Layar pratinjau menampilkan hasilnya.
-// 3. `commit()` — simpan baris yang siap: kategori baru dibuat otomatis,
-//    stok awal tercatat di kartu stok, satu catatan di Riwayat Aktivitas.
-//
-// Kolom (urutan bebas, huruf besar/kecil bebas):
-//   Nama*, Kategori*, Satuan*, Harga Jual*, Stok, Barcode, Kemasan,
-//   Isi Kemasan, Barcode Kemasan
-// Barcode lebih dari satu dipisah "|" (mis. 899111|899222).
-
 enum ImportRowStatus { ready, skipped, error }
 
 class ImportRow {
@@ -84,7 +70,7 @@ class ProductImportService {
 
   static String _normalize(String header) => header.toLowerCase().replaceAll(RegExp('[^a-z]'), '');
 
-  // Isi template CSV ("sep=," supaya Excel langsung memisah kolom).
+  // "sep=," biar excel langsung misahin kolomnya
   static String templateCsv() => [
     'sep=,',
     'Nama,Kategori,Satuan,Harga Jual,Stok,Barcode,Kemasan,Isi Kemasan,Barcode Kemasan',
@@ -94,7 +80,6 @@ class ProductImportService {
   ].join('\n');
 
   static List<ImportRow> parse(List<List<String>> table) {
-    // Baris judul = baris pertama yang punya kolom "nama".
     final headerIndex = table.indexWhere((row) => row.any((c) => _columns['nama']!.contains(_normalize(c))));
     if (headerIndex == -1) throw DataException('Baris judul tidak ditemukan. Pastikan ada kolom "Nama".');
 
@@ -238,7 +223,6 @@ class ProductImportService {
   static List<String> _splitBarcodes(String value) =>
       {for (final part in value.split(RegExp(r'[|;\s]+'))) if (part.trim().isNotEmpty) part.trim()}.toList();
 
-  // "Rp 55.000" / "55000" / "55,000" -> 55000.
   static int? _parseInt(String value) {
     final cleaned = value.replaceAll(RegExp(r'[^0-9-]'), '');
     return cleaned.isEmpty ? null : int.tryParse(cleaned);

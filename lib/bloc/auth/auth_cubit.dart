@@ -22,7 +22,6 @@ class AuthState {
 
   AuthState.loading() : this(status: AuthStatus.loading, errorMessage: '');
 
-  // Emit saat login berhasil — LoginScreen bereaksi dengan pindah ke Home.
   AuthState.loginSuccess({AppUser? user})
     : this(status: AuthStatus.loginSuccess, errorMessage: '', user: user);
 

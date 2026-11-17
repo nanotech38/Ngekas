@@ -1,8 +1,3 @@
-// ─── CategoryModel ──────────────────────────────────────────────────────────
-//
-// Kategori barang (mis. Minuman, Sembako) — dipakai untuk mengelompokkan
-// ProductModel dan sebagai filter di Laporan & Kasir.
-
 class CategoryModel {
   final String id;
   final String name;

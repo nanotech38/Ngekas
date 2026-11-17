@@ -22,18 +22,6 @@ import 'package:ngekas/widget/app_bottom_sheet.dart';
 import 'package:ngekas/widget/app_dialog.dart';
 import 'package:ngekas/widget/app_toast.dart';
 
-// ─── CashierScreen ──────────────────────────────────────────────────────────
-//
-// Layar Kasir (POS) dengan alur bertahap supaya tidak membingungkan:
-// 1. Tambah barang — "Scan Barcode" (kamera, cocokkan barcode/kode barang
-//    terdaftar) atau "Pilih Manual" (daftar barang yang bisa dicari).
-// 2. Atur jumlah di QuantitySheet, lalu masuk keranjang.
-// 3. Ulangi langkah 1–2 untuk barang lain, lalu tekan "Bayar".
-// Barang di keranjang bisa diketuk untuk mengubah jumlah / dikeluarkan.
-// Stok baru berkurang saat checkout berhasil. Bisa dipakai admin & kasir.
-// CashierCubit disediakan di level aplikasi (main.dart), jadi keranjang
-// tetap ada walau user kembali ke Beranda lalu buka Kasir lagi.
-
 class CashierScreen extends StatelessWidget {
   const CashierScreen({super.key});
 
@@ -58,7 +46,6 @@ class _CashierViewState extends State<_CashierView> {
     _subscription = ProductService.watch().listen((products) {
       if (!mounted) return;
       _products = products;
-      // Harga/stok di keranjang ikut menyesuaikan perubahan data barang.
       context.read<CashierCubit>().syncProducts(products);
     });
   }
@@ -69,10 +56,7 @@ class _CashierViewState extends State<_CashierView> {
     super.dispose();
   }
 
-  // Data barang terbaru (stok/harga bisa berubah sejak dipilih).
   ProductModel _latest(ProductModel product) => _products.where((p) => p.id == product.id).firstOrNull ?? product;
-
-  // ─── Langkah 1: tambah barang ─────────────────────────────────────────────
 
   Future<void> _scanBarcode() async {
     final result = await NavigationService.get().push(const BarcodeScannerScreen());
@@ -80,8 +64,6 @@ class _CashierViewState extends State<_CashierView> {
 
     final match = ProductService.findByCode(result);
     if (match == null) {
-      // Barcode belum terdaftar: tawarkan hubungkan ke barang yang sudah ada
-      // (mis. kemasan baru / dus distributor lain), lalu langsung lanjut.
       AppDialog.show(
         context,
         type: AppDialogType.warning,
@@ -115,11 +97,8 @@ class _CashierViewState extends State<_CashierView> {
     await _askQuantity(product);
   }
 
-  // ─── Langkah 2: atur jumlah ───────────────────────────────────────────────
-
-  // `pack` diisi kalau yang di-scan barcode kemasan (mis. Dus) — jumlahnya
-  // DITAMBAHKAN ke yang sudah ada di keranjang. Selain itu jumlah di sheet =
-  // jumlah total di keranjang (bisa diubah / dikeluarkan).
+  // kalau yg discan barcode kemasan, jumlahnya DITAMBAH ke keranjang.
+  // selain itu angka di sheet = total di keranjang.
   Future<void> _askQuantity(ProductModel product, {ProductPack? pack}) async {
     final latest = _latest(product);
     final cubit = context.read<CashierCubit>();
@@ -135,7 +114,6 @@ class _CashierViewState extends State<_CashierView> {
         AppToast.showWarning(context, 'Semua stok ${latest.name} sudah ada di keranjang');
         return;
       }
-      // Sheet dibatasi sisa stok yang belum masuk keranjang.
       final added = await QuantitySheet.show(
         context,
         latest.copyWith(stock: latest.stock - current),
@@ -163,8 +141,6 @@ class _CashierViewState extends State<_CashierView> {
     }
   }
 
-  // ─── Langkah 3: bayar ─────────────────────────────────────────────────────
-
   void _openCheckout() {
     final cubit = context.read<CashierCubit>();
     AppBottomSheet.show(
@@ -176,8 +152,6 @@ class _CashierViewState extends State<_CashierView> {
     );
   }
 
-  // Setelah transaksi tersimpan: tampilkan struk (sama seperti di Laporan,
-  // plus tunai & kembalian). Sheet ditutup -> langsung kembali ke Beranda.
   Future<void> _showReceipt(String invoiceNo, int total, int cash) async {
     if (!mounted) return;
     final lines = DatabaseService.instance.transactions.rows.where((t) => t.invoiceNo == invoiceNo).toList();
@@ -243,8 +217,6 @@ class _CashierViewState extends State<_CashierView> {
   }
 
   Widget _buildStepGuide({required bool hasItems}) {
-    // Langkah yang sedang aktif: 1 saat keranjang kosong, 3 kalau sudah ada
-    // barang (tinggal tambah lagi atau bayar).
     final activeStep = hasItems ? 3 : 1;
     const steps = ['Pilih barang', 'Isi jumlah', 'Bayar'];
 
@@ -254,7 +226,6 @@ class _CashierViewState extends State<_CashierView> {
         for (var i = 0; i < steps.length; i++) ...[
           if (i > 0)
             Expanded(
-              // Sejajar dengan tengah lingkaran nomor (tinggi 28).
               child: Container(
                 height: 2,
                 margin: const EdgeInsets.only(top: 13),

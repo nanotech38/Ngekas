@@ -12,12 +12,6 @@ import 'package:ngekas/services/navigation_services.dart';
 import 'package:ngekas/template/base_template.dart';
 import 'package:ngekas/widget/app_dialog.dart';
 
-// ─── ProfileScreen ──────────────────────────────────────────────────────────
-//
-// Tab "Profil" — info akun (nama, username, role) plus pintasan ke Riwayat
-// Aktivitas, Kategori Barang, Kelola Pengguna (admin), Pengaturan & tombol
-// keluar (lewat dialog konfirmasi biar tidak kepencet tidak sengaja).
-
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
 
